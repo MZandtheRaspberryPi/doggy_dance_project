@@ -7,5 +7,5 @@ RUN npm ci && npm run build
 # stage 2
 
 FROM nginx:alpine
-COPY --from=my-app-build /app/dist/hello-world /usr/share/nginx/html
+COPY --from=my-app-build /app/dist/angular-doggy-dance-project /usr/share/nginx/html
 EXPOSE 80

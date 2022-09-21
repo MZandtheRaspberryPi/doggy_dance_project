@@ -20,6 +20,8 @@
     "@angular/router": "^14.2.0",
     "angular-plotly.js": "^4.0.4",
     "plotly.js-dist-min": "^2.14.0",
+    "plotly.js-gl3d-dist": "^2.14.0",
+    "plotly.js-gl3d-dist-min": "^2.14.0",
     "rxjs": "~7.5.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.11.4"

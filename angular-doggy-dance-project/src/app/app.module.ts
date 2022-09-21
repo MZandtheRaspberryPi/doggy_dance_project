@@ -1,18 +1,14 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { FormsModule } from '@angular/forms';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { RoboviewerComponent } from './roboviewer/roboviewer.component';
 
-import * as PlotlyJS from 'plotly.js-dist-min';
-import { PlotlyModule } from 'angular-plotly.js';
+import { PlotlyViaWindowModule } from 'angular-plotly.js';
 import { RobomodelComponent } from './robomodel/robomodel.component';
 import { JointComponent } from './joint/joint.component';
 import { LinkComponent } from './link/link.component';
-
-PlotlyModule.plotlyjs = PlotlyJS;
 
 @NgModule({
   declarations: [
@@ -24,9 +20,8 @@ PlotlyModule.plotlyjs = PlotlyJS;
   ],
   imports: [
     BrowserModule,
-    FormsModule,
     AppRoutingModule,
-    PlotlyModule
+    PlotlyViaWindowModule
   ],
   providers: [],
   bootstrap: [AppComponent]

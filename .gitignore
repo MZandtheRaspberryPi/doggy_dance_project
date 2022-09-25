@@ -19,3 +19,6 @@ hello-world/typings
 # System Files  
 .DS_Store  
 Thumbs.db  
+
+# build files
+oatpp-doggy-dance-project/build/*

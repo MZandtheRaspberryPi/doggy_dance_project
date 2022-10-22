@@ -11,6 +11,7 @@ add_library(${project_name}-lib
         src/controller/MyController.cpp
         src/controller/MyController.hpp
         src/dto/DTOs.hpp
+        src/kinematics/RoboKinematicModel.hpp
 )
 
 ## link libs

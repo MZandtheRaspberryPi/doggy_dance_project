@@ -1,0 +1,25 @@
+# compiled output  
+hello-world/dist  
+hello-world/tmp  
+hello-world/out-tsc  
+
+# dependencies  
+hello-world/node_modules  
+
+# misc  
+hello-world/.sass-cache  
+hello-world/connect.lock  
+hello-world/coverage  
+hello-world/libpeerconnection.log  
+npm-debug.log  
+yarn-error.log  
+testem.log  
+hello-world/typings  
+  
+# System Files  
+.DS_Store  
+Thumbs.db  
+
+# build files
+oatpp-doggy-dance-project/build/*
+*/.vscode/*

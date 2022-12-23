@@ -1,0 +1,18 @@
+<h2>Robot Models</h2>
+<li *ngFor="let robomodel of robomodels">
+    <button [class.selected]="robomodel === selectedRobomodel" type="button" (click)="onSelect(robomodel)">
+        <span class="name">{{robomodel.name}}</span>
+    </button>
+</li>
+
+<div *ngIf="selectedRobomodel">
+
+    <h2>{{selectedRobomodel.name | uppercase}} Details</h2>
+
+    <li *ngFor="let joint of selectedRobomodel.joints">
+        <div>
+            <div>name: {{joint.name}}</div>
+        </div>
+    </li>
+
+</div>

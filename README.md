@@ -22,3 +22,15 @@ running in the cloud
 ```
 docker run -itd -p 9000:80 --restart=always mzandtheraspberrypi/angular-app:latest
 ```
+
+## Building REST API with Docker
+
+From root of repo:
+
+```
+docker build -t rest-api-app -f rest_api.Dockerfile ./oatpp-doggy-dance-project/
+```
+
+```
+docker run -p 8000:8000 rest-api-app
+```

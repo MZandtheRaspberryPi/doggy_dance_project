@@ -7,41 +7,74 @@ void RoboModel::setJoints(const std::vector<Joint> &joints) {
   joints_ = joints;
 }
 
+int RoboModel::getId() { return id_; }
+std::string RoboModel::getName() { return name_; }
+
 std::vector<Joint> RoboModel::getJoints() { return joints_; }
 
 void RoboModel::setLinks(const std::vector<Link> &links) { links_ = links; }
 
 std::vector<Link> RoboModel::getLinks() { return links_; }
 
-Coordinate translate(const Coordinate &coordinate,
-                     const Coordinate &translation) {
-  Coordinate new_coordinate;
-  new_coordinate.x = coordinate.x + translation.x;
-  new_coordinate.y = coordinate.y + translation.y;
-  new_coordinate.z = coordinate.z + translation.z;
-}
-
 RoboDog::RoboDog(const int &id, const std::string &name,
-                 const Coordinate &starting_location)
+                 const Eigen::Vector3d &starting_location)
     : RoboModel(id, name) {
 
   std::vector<Link> links;
   std::vector<Joint> joints;
 
-  Coordinate link1_starting_translation{body_length_ / 2, body_width / 2, 0};
-  Coordinate link1_ending_translation{body_length_ / 2, -body_width / 2, 0};
-  Coordinate link1_starting_coordinate =
-      translate(starting_location, link1_starting_translation);
-  Coordinate link1_ending_coordinate =
-      translate(starting_location, link1_ending_translation);
+  Eigen::Vector3d link1_starting_translation{body_length_ / 2, body_width / 2,
+                                             0};
+  Eigen::Vector3d link1_ending_translation{body_length_ / 2, -body_width / 2,
+                                           0};
+  Eigen::Vector3d link1_starting_coordinate =
+      starting_location + link1_starting_translation;
+  Eigen::Vector3d link1_ending_coordinate =
+      starting_location + link1_ending_translation;
 
   Link link1{1, "front_body", link1_starting_coordinate,
              link1_ending_coordinate};
+
+  Eigen::Vector3d link2_starting_translation{body_length_ / 2, -body_width / 2,
+                                             0};
+  Eigen::Vector3d link2_ending_translation{-body_length_ / 2, -body_width / 2,
+                                           0};
+
+  Link link2{2, "right_body", starting_location + link2_starting_translation,
+             starting_location + link2_ending_translation};
+
+  Eigen::Vector3d link3_starting_translation{-body_length_ / 2, -body_width / 2,
+                                             0};
+  Eigen::Vector3d link3_ending_translation{-body_length_ / 2, body_width / 2,
+                                           0};
+
+  Link link3{3, "back_body", starting_location + link3_starting_translation,
+             starting_location + link3_ending_translation};
+
+  Eigen::Vector3d link4_starting_translation{-body_length_ / 2, body_width / 2,
+                                             0};
+  Eigen::Vector3d link4_ending_translation{body_length_ / 2, body_width / 2, 0};
+
+  Link link4{4, "left_body", starting_location + link4_starting_translation,
+             starting_location + link4_ending_translation};
+
   links.push_back(link1);
+  links.push_back(link2);
+  links.push_back(link3);
+  links.push_back(link4);
   setLinks(links);
 
   Joint joint1{1, "front_left_shoulder", link1_starting_coordinate};
+  Joint joint2{2, "front_right_shoulder",
+               starting_location + link2_starting_translation};
+  Joint joint3{3, "back_right_shoulder",
+               starting_location + link3_starting_translation};
+  Joint joint4{4, "back_left_shoulder",
+               starting_location + link4_starting_translation};
   joints.push_back(joint1);
+  joints.push_back(joint2);
+  joints.push_back(joint3);
+  joints.push_back(joint4);
   setJoints(joints);
 
   /*
@@ -170,4 +203,4 @@ RoboDog::RoboDog(const int &id, const std::string &name,
   ];
   */
 }
-setLinks(links);
+// setLinks(links);

@@ -3,6 +3,8 @@
 
 #include <memory>
 
+#include <Eigen/Dense>
+
 #include "dto/DTOs.hpp"
 
 #include "oatpp/core/macro/codegen.hpp"
@@ -11,7 +13,8 @@
 
 #include "kinematics/RoboKinematicModel.hpp"
 
-auto getSharedPtrFromModel(RoboModel *model);
+oatpp::data::mapping::type::DTOWrapper<RoboModelDTO>
+getRoboModelDTOSharedPtrFromModel(std::shared_ptr<RoboModel> model);
 
 #include OATPP_CODEGEN_BEGIN(ApiController) //<-- Begin Codegen
 
@@ -28,26 +31,27 @@ public:
   MyController(OATPP_COMPONENT(std::shared_ptr<ObjectMapper>, objectMapper))
       : oatpp::web::server::api::ApiController(objectMapper) {
 
-    Coordinate starting_location{0, 0, 0};
+    Eigen::Vector3d starting_location{0, 0, 1};
     std::string robo_dog_name("Robot Dog");
-    RoboDog *robot_dog_ptr = new RoboDog(0, robo_dog_name, starting_location);
-    robo_dog_ = std::unique_ptr<RoboDog>(robot_dog_ptr);
-    robo_models_.push_back(robo_dog_);
+    robo_models_.push_back(std::shared_ptr<RoboModel>(
+        new RoboDog(0, robo_dog_name, starting_location)));
   }
 
 public:
   ENDPOINT("GET", "/robomodels", getRoboModels) {
 
-    oatpp::List<oatpp::Object<RoboModelDescriptionDTO>> descriptions;
+    auto robo_model_desc_dto = RoboModelDescriptionListDTO::createShared();
 
-    for (RoboModel model : robo_models_) {
+    robo_model_desc_dto->descriptions = {};
+
+    for (std::shared_ptr<RoboModel> model : robo_models_) {
       auto desc = RoboModelDescriptionDTO::createShared();
-      desc->id = model.id;
-      desc->name = model.name;
-      descriptions.push_back(desc);
+      desc->id = robo_models_[0]->getId();
+      desc->name = robo_models_[0]->getName();
+      robo_model_desc_dto->descriptions->push_back(desc);
     }
 
-    return createDtoResponse(Status::CODE_200, dog_desc);
+    return createDtoResponse(Status::CODE_200, robo_model_desc_dto);
   }
 
   ENDPOINT("GET", "/robomodels/{roboModelId}", getRoboModelById,
@@ -56,16 +60,21 @@ public:
     auto robo_model = RoboModelDTO::createShared();
 
     bool model_found = false;
-    for (RoboModel *model : robo_models_) {
+    for (std::shared_ptr<RoboModel> model : robo_models_) {
 
-      if (model->id != roboModelId) {
+      if (model->getId() != roboModelId) {
         continue;
       }
-      auto desc = getSharedPtrFromModel(model);
+      robo_model = getRoboModelDTOSharedPtrFromModel(model);
       model_found = true;
       break;
     }
-    return createDtoResponse(Status::CODE_200, dto);
+    if (model_found) {
+
+      return createDtoResponse(Status::CODE_200, robo_model);
+    } else {
+      return createDtoResponse(Status::CODE_500, robo_model);
+    }
   }
 
   /*
@@ -125,8 +134,7 @@ public:
       */
 
 private:
-  std::vector<std::unique_ptr<RoboModel>> robo_models_;
-  std::unique_ptr<RoboDog> robo_dog_;
+  std::vector<std::shared_ptr<RoboModel>> robo_models_;
 };
 
 #include OATPP_CODEGEN_END(ApiController) //<-- End Codegen

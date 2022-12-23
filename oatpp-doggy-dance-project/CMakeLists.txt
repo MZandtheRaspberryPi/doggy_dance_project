@@ -1,26 +1,35 @@
 cmake_minimum_required(VERSION 3.1)
 
-set(project_name doggy-dance-project) ## rename your project here
+
+set(project_name doggy-dance-project)
+set(CMAKE_CXX_STANDARD 17)
 
 project(${project_name})
-
-set(CMAKE_CXX_STANDARD 11)
 
 add_library(${project_name}-lib
         src/AppComponent.hpp
         src/controller/MyController.cpp
         src/controller/MyController.hpp
         src/dto/DTOs.hpp
+        src/kinematics/RoboKinematicModel.cpp
         src/kinematics/RoboKinematicModel.hpp
 )
+
+set_target_properties(${project_name}-lib
+    PROPERTIES
+    CXX_STANDARD 17
+    CXX_EXTENSIONS off
+    )
 
 ## link libs
 
 find_package(oatpp 1.3.0 REQUIRED)
+find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 
 target_link_libraries(${project_name}-lib
         PUBLIC oatpp::oatpp
         PUBLIC oatpp::oatpp-test
+        Eigen3::Eigen
 )
 
 target_include_directories(${project_name}-lib PUBLIC src)

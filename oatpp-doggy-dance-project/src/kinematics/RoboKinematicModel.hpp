@@ -1,25 +1,21 @@
 #include <string>
 #include <vector>
 
-struct Coordinate {
-  float x;
-  float y;
-  float z;
-};
+#include <Eigen/Dense>
 
 struct Joint {
 
   int number;
   std::string name;
-  Coordinate location;
+  Eigen::Vector3d location;
 };
 
 struct Link {
 
   int number;
   std::string name;
-  Coordinate start_location;
-  Coordinate end_location;
+  Eigen::Vector3d start_location;
+  Eigen::Vector3d end_location;
 };
 
 class RoboModel {
@@ -31,9 +27,14 @@ public:
   void setLinks(const std::vector<Link> &links);
   std::vector<Link> getLinks();
 
+  /*
   virtual void setRoboPosition(const float &x, const float &y, const float &z,
                                const float &roll, const float &pitch,
                                const float &yaw) = 0;
+  */
+
+  std::string getName();
+  int getId();
 
 private:
   int id_;
@@ -45,7 +46,7 @@ private:
 class RoboDog : public RoboModel {
 public:
   RoboDog(const int &id, const std::string &name,
-          const Coordinate &starting_location);
+          const Eigen::Vector3d &starting_location);
   void setRoboPosition(const float &x, const float &y, const float &z,
                        const float &roll, const float &pitch, const float &yaw);
 
@@ -58,6 +59,3 @@ private:
   float body_length_ = 1.2;
   float body_width = 0.9;
 };
-
-Coordinate translate(const Coordinate &coordinate,
-                     const Coordinate &translation);

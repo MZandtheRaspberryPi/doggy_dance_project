@@ -16,10 +16,10 @@ class RoboModelDescriptionDTO : public oatpp::DTO {
   DTO_FIELD(String, name);
 };
 
-class RoboModelListDTO : public oatpp::DTO {
+class RoboModelDescriptionListDTO : public oatpp::DTO {
 
-  DTO_INIT(RoboModelListDTO, DTO)
-  DTO_FIELD(List<Object<RoboModelListDTO>>, ids);
+  DTO_INIT(RoboModelDescriptionListDTO, DTO)
+  DTO_FIELD(Vector<Object<RoboModelDescriptionDTO>>, descriptions);
 };
 
 class CoordinateDTO : public oatpp::DTO {
@@ -55,8 +55,14 @@ class RoboModelDTO : public oatpp::DTO {
 
   DTO_FIELD(Int32, id);
   DTO_FIELD(String, name);
-  DTO_FIELD(List<Object<LinkDTO>>, links);
-  DTO_FIELD(List<Object<JointDTO>>, joints);
+  DTO_FIELD(Vector<Object<LinkDTO>>, links);
+  DTO_FIELD(Vector<Object<JointDTO>>, joints);
+};
+
+class RoboModelListDTO : public oatpp::DTO {
+
+  DTO_INIT(RoboModelListDTO, DTO)
+  DTO_FIELD(List<Object<RoboModelDTO>>, robo_models);
 };
 
 #include OATPP_CODEGEN_END(DTO)

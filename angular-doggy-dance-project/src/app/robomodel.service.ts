@@ -7,6 +7,8 @@ import { MessageService } from './message.service';
 
 import { RobomodelList } from './robomodel_list';
 
+import { environment } from '../environments/environment';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -17,7 +19,9 @@ export class RobomodelService {
     private messageService: MessageService
   ) { }
 
-  private roboModelsUrl = 'http://localhost:8000/robomodels';
+
+  private API_URL: string = environment.API_URL;
+  private roboModelsUrl: string = this.API_URL + '/robomodels';
 
   /**
  * Handle Http operation that failed.

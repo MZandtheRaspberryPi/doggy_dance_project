@@ -2,7 +2,7 @@ version: '3.3'
 services:
   angular-docker:
     container_name: angular-docker-container
-    image: mzandtheraspberrypi/doggy-dance-web-app:2022-12-23
+    image: mzandtheraspberrypi/doggy-dance-web-app:2022-12-24
     ports:
       - '80:80'
   restapi-docker:

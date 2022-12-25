@@ -21,6 +21,5 @@ RUN rm -rf /app
 FROM alpine:3.17
 RUN apk add cmake g++ make
 COPY --from=restapi-build /entrypoint/doggy-dance-project-exe /doggy-dance-project-exe
-EXPOSE 80
 
 ENTRYPOINT ["/doggy-dance-project-exe"]

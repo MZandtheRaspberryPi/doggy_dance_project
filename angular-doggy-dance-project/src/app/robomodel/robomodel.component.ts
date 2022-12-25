@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 
 
 import { Robomodel } from '../robomodel';
+import { RobomodelList } from '../robomodel_list';
 import { RobomodelService } from '../robomodel.service';
 
 @Component({
@@ -15,12 +16,10 @@ export class RobomodelComponent implements OnInit {
   selectedRobomodel?: Robomodel;
 
   onSelect(robomodel: Robomodel): void {
-    if (this.selectedRobomodel === robomodel)
-    {
+    if (this.selectedRobomodel === robomodel) {
       this.selectedRobomodel = undefined;
     }
-    else
-    {
+    else {
       this.selectedRobomodel = robomodel;
     }
   }
@@ -32,7 +31,7 @@ export class RobomodelComponent implements OnInit {
   }
 
   getRobomodels(): void {
-    this.robomodelService.getRobomodels().subscribe(robomodels => this.robomodels = robomodels);
+    this.robomodelService.getRobomodels().subscribe(robomodels => this.robomodels = robomodels.robo_models);
   }
 
 }

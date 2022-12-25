@@ -7,6 +7,6 @@ services:
       - '80:80'
   restapi-docker:
     container_name: rest-api-docker-container
-    image: mzandtheraspberrypi/doggy-dance-rest-api-app:2022-12-23
+    image: mzandtheraspberrypi/doggy-dance-rest-api-app:2022-12-24
     ports:
       - '8000:8000'

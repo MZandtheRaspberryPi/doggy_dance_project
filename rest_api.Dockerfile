@@ -1,4 +1,4 @@
-FROM alpine:3.17
+FROM alpine:3.17 as restapi-build
 
 RUN apk add git
 RUN apk add cmake
@@ -18,4 +18,9 @@ RUN mkdir /entrypoint && cp /app/build/doggy-dance-project-exe /entrypoint
 
 RUN rm -rf /app
 
-ENTRYPOINT ["/entrypoint/doggy-dance-project-exe"]
+FROM alpine:3.17
+RUN apk add cmake g++ make
+COPY --from=restapi-build /entrypoint/doggy-dance-project-exe /doggy-dance-project-exe
+EXPOSE 80
+
+ENTRYPOINT ["/doggy-dance-project-exe"]

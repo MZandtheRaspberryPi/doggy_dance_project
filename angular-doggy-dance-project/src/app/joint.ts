@@ -1,8 +1,8 @@
+import { Coordinate } from './coordinate';
+
 export interface Joint {
-    id: number;
-    name: string;
-    axis: string;
-    x: number;
-    y: number;
-    z: number;
-  }
+  id: number;
+  name: string;
+  axis: string;
+  location: Coordinate;
+}

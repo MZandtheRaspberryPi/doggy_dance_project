@@ -38,22 +38,21 @@ public:
   }
 
 public:
+  ADD_CORS(getRoboModels)
   ENDPOINT("GET", "/robomodels", getRoboModels) {
 
-    auto robo_model_desc_dto = RoboModelDescriptionListDTO::createShared();
+    auto robo_model_list_dto = RoboModelListDTO::createShared();
 
-    robo_model_desc_dto->descriptions = {};
-
+    robo_model_list_dto->robo_models = {};
     for (std::shared_ptr<RoboModel> model : robo_models_) {
-      auto desc = RoboModelDescriptionDTO::createShared();
-      desc->id = robo_models_[0]->getId();
-      desc->name = robo_models_[0]->getName();
-      robo_model_desc_dto->descriptions->push_back(desc);
+      auto robo_model = getRoboModelDTOSharedPtrFromModel(model);
+      robo_model_list_dto->robo_models->push_back(robo_model);
     }
 
-    return createDtoResponse(Status::CODE_200, robo_model_desc_dto);
+    return createDtoResponse(Status::CODE_200, robo_model_list_dto);
   }
 
+  ADD_CORS(getRoboModelById)
   ENDPOINT("GET", "/robomodels/{roboModelId}", getRoboModelById,
            PATH(Int64, roboModelId, "roboModelId")) {
 

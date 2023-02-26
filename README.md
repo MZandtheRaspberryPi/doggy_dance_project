@@ -28,9 +28,9 @@ docker run -itd -p 80:80 --restart=always mzandtheraspberrypi/angular-app:latest
 From root of repo:
 
 ```
-docker build -t rest-api-app -f rest_api.Dockerfile ./oatpp-doggy-dance-project/
+docker build -t mzandtheraspberrypi/doggy-dance-rest-api-app:2022-12-23 -f rest_api.Dockerfile ./oatpp-doggy-dance-project/
 ```
 
 ```
-docker run -p 8000:8000 rest-api-app
+docker run -p 8000:8000 mzandtheraspberrypi/doggy-dance-rest-api-app:2022-12-23
 ```

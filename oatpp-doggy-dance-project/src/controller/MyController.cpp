@@ -54,5 +54,7 @@ getRoboModelDescDTOSharedPtrFromModel(std::shared_ptr<RoboModel> model) {
 
   robo_model_desc->id = model->getId();
   robo_model_desc->name = model->getName();
+  robo_model_desc->num_joints = model->getJoints().size();
+  robo_model_desc->num_links = model->getLinks().size();
   return robo_model_desc;
 }

@@ -14,6 +14,8 @@ class RoboModelDescriptionDTO : public oatpp::DTO {
   DTO_INIT(RoboModelDescriptionDTO, DTO)
   DTO_FIELD(Int32, id);
   DTO_FIELD(String, name);
+  DTO_FIELD(Int32, num_links);
+  DTO_FIELD(Int32, num_joints);
 };
 
 class RoboModelDescriptionListDTO : public oatpp::DTO {

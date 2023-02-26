@@ -6,9 +6,10 @@
 </li>
 
 <div *ngIf="selected_desc">
-
-    <h2>{{selected_desc.name | uppercase}} Details</h2>
-
-    <h3>id: {{selected_desc.id}}</h3>
+    <div>Details</div>
+    <div> id: {{selected_desc.id}} </div>
+    <div> name: {{selected_desc.name}} </div>
+    <div>Number of Joints: {{selected_desc.num_joints}} </div>
+    <div>Number of Links: {{selected_desc.num_links}} </div>
 
 </div>

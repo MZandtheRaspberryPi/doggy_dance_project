@@ -46,3 +46,13 @@ getRoboModelDTOSharedPtrFromModel(std::shared_ptr<RoboModel> model) {
   robo_model->name = model->getName();
   return robo_model;
 }
+
+oatpp::data::mapping::type::DTOWrapper<RoboModelDescriptionDTO>
+getRoboModelDescDTOSharedPtrFromModel(std::shared_ptr<RoboModel> model) {
+
+  auto robo_model_desc = RoboModelDescriptionDTO::createShared();
+
+  robo_model_desc->id = model->getId();
+  robo_model_desc->name = model->getName();
+  return robo_model_desc;
+}

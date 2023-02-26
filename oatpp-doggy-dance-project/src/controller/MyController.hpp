@@ -16,6 +16,9 @@
 oatpp::data::mapping::type::DTOWrapper<RoboModelDTO>
 getRoboModelDTOSharedPtrFromModel(std::shared_ptr<RoboModel> model);
 
+oatpp::data::mapping::type::DTOWrapper<RoboModelDescriptionDTO>
+getRoboModelDescDTOSharedPtrFromModel(std::shared_ptr<RoboModel> model);
+
 #include OATPP_CODEGEN_BEGIN(ApiController) //<-- Begin Codegen
 
 /**
@@ -41,15 +44,15 @@ public:
   ADD_CORS(getRoboModels)
   ENDPOINT("GET", "/robomodels", getRoboModels) {
 
-    auto robo_model_list_dto = RoboModelListDTO::createShared();
+    auto robo_model_desc_list_dto = RoboModelDescriptionListDTO::createShared();
 
-    robo_model_list_dto->robo_models = {};
+    robo_model_desc_list_dto->descriptions = {};
     for (std::shared_ptr<RoboModel> model : robo_models_) {
-      auto robo_model = getRoboModelDTOSharedPtrFromModel(model);
-      robo_model_list_dto->robo_models->push_back(robo_model);
+      auto robo_model_desc_dto = getRoboModelDescDTOSharedPtrFromModel(model);
+      robo_model_desc_list_dto->descriptions->push_back(robo_model_desc_dto);
     }
 
-    return createDtoResponse(Status::CODE_200, robo_model_list_dto);
+    return createDtoResponse(Status::CODE_200, robo_model_desc_list_dto);
   }
 
   ADD_CORS(getRoboModelById)

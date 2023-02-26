@@ -104,9 +104,9 @@ export class RoboviewerComponent implements OnInit {
   }
 
   getRobomodels(): void {
-    this.robomodelService.getRobomodels().subscribe(
+    this.robomodelService.getRobomodel(0).subscribe(
       {
-        next: robomodels => this.robomodel = robomodels.robo_models[0],
+        next: robomodel => this.robomodel = robomodel,
         error: err => console.error('An error occurred', err),
         complete: () => this.updateGraphOnRobotLoad()
       });

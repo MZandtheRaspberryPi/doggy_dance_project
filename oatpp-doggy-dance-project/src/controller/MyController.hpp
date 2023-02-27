@@ -35,9 +35,10 @@ public:
       : oatpp::web::server::api::ApiController(objectMapper) {
 
     Eigen::Vector3d starting_location{0, 0, 1};
+    Eigen::Vector3d starting_rotation{0, 0, 0};
     std::string robo_dog_name("Robot Dog");
     robo_models_.push_back(std::shared_ptr<RoboModel>(
-        new RoboDog(0, robo_dog_name, starting_location)));
+        new RoboDog(0, robo_dog_name, starting_rotation, starting_location)));
   }
 
 public:

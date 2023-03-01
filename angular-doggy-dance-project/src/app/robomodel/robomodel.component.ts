@@ -1,8 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 
-
-import { Robomodel } from '../robomodel';
-import { RobomodelList } from '../robomodel_list';
+import { RobomodelDesc, RobomodelDescList } from '../robomodel_desc';
 import { RobomodelService } from '../robomodel.service';
 
 @Component({
@@ -12,26 +10,29 @@ import { RobomodelService } from '../robomodel.service';
 })
 export class RobomodelComponent implements OnInit {
 
-  robomodels: Robomodel[] = [];
-  selectedRobomodel?: Robomodel;
+  robomodel_descs: RobomodelDescList;
+  selected_desc?: RobomodelDesc;
 
-  onSelect(robomodel: Robomodel): void {
-    if (this.selectedRobomodel === robomodel) {
-      this.selectedRobomodel = undefined;
-    }
-    else {
-      this.selectedRobomodel = robomodel;
-    }
+  constructor(private robomodelService: RobomodelService) {
+    this.robomodel_descs = { descriptions: [] };
   }
-
-  constructor(private robomodelService: RobomodelService) { }
 
   ngOnInit(): void {
     this.getRobomodels();
   }
 
+  onSelect(robomodel: RobomodelDesc): void {
+    if (this.selected_desc === robomodel) {
+      this.selected_desc = undefined;
+    }
+    else {
+      this.selected_desc = robomodel;
+    }
+  }
+
+
   getRobomodels(): void {
-    this.robomodelService.getRobomodels().subscribe(robomodels => this.robomodels = robomodels.robo_models);
+    this.robomodelService.getRobomodels().subscribe(robomodel_descs => this.robomodel_descs = robomodel_descs);
   }
 
 }

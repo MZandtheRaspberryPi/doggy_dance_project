@@ -6,6 +6,9 @@ import { Observable, of } from 'rxjs';
 import { MessageService } from './message.service';
 
 import { RobomodelList } from './robomodel_list';
+import { Robomodel } from './robomodel';
+
+import { RobomodelDescList } from './robomodel_desc';
 
 import { environment } from '../environments/environment';
 
@@ -49,10 +52,17 @@ export class RobomodelService {
     this.messageService.add(`HeroService: ${message}`);
   }
 
-  getRobomodels(): Observable<RobomodelList> {
-    return this.http.get<RobomodelList>(this.roboModelsUrl)
+  getRobomodel(id: number): Observable<Robomodel> {
+    return this.http.get<Robomodel>(this.roboModelsUrl + `/${id}`)
       .pipe(
-        catchError(this.handleError<RobomodelList>('getRobomodels', { robo_models: [] }))
+        catchError(this.handleError<Robomodel>('getRoboModel', { id: -1, name: "", links: [], joints: [], end_effectors: [] }))
+      );
+  }
+
+  getRobomodels(): Observable<RobomodelDescList> {
+    return this.http.get<RobomodelDescList>(this.roboModelsUrl)
+      .pipe(
+        catchError(this.handleError<RobomodelDescList>('getRobomodels', { descriptions: [] }))
       );
   }
 }

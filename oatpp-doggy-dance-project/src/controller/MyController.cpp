@@ -7,6 +7,7 @@ getRoboModelDTOSharedPtrFromModel(std::shared_ptr<RoboModel> model) {
 
   robo_model->joints = {};
   robo_model->links = {};
+  robo_model->end_effectors = {};
 
   for (const Joint &joint : model->getJoints()) {
     auto dto_joint = JointDTO::createShared();
@@ -42,7 +43,34 @@ getRoboModelDTOSharedPtrFromModel(std::shared_ptr<RoboModel> model) {
     robo_model->links->push_back(dto_link);
   }
 
+  for (const Joint &joint : model->getEndEffectors()) {
+    auto dto_joint = JointDTO::createShared();
+
+    auto joint_location = CoordinateDTO::createShared();
+
+    joint_location->x = joint.location[0];
+    joint_location->y = joint.location[1];
+    joint_location->z = joint.location[2];
+
+    dto_joint->location = joint_location;
+    dto_joint->name = joint.name;
+    dto_joint->number = joint.number;
+    robo_model->end_effectors->push_back(dto_joint);
+  }
+
   robo_model->id = model->getId();
   robo_model->name = model->getName();
   return robo_model;
+}
+
+oatpp::data::mapping::type::DTOWrapper<RoboModelDescriptionDTO>
+getRoboModelDescDTOSharedPtrFromModel(std::shared_ptr<RoboModel> model) {
+
+  auto robo_model_desc = RoboModelDescriptionDTO::createShared();
+
+  robo_model_desc->id = model->getId();
+  robo_model_desc->name = model->getName();
+  robo_model_desc->num_joints = model->getJoints().size();
+  robo_model_desc->num_links = model->getLinks().size();
+  return robo_model_desc;
 }

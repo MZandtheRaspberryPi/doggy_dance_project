@@ -1,18 +1,15 @@
 <h2>Robot Models</h2>
-<li *ngFor="let robomodel of robomodels">
-    <button [class.selected]="robomodel === selectedRobomodel" type="button" (click)="onSelect(robomodel)">
+<li *ngFor="let robomodel of robomodel_descs.descriptions">
+    <button [class.selected]="robomodel === selected_desc" type="button" (click)="onSelect(robomodel)">
         <span class="name">{{robomodel.name}}</span>
     </button>
 </li>
 
-<div *ngIf="selectedRobomodel">
-
-    <h2>{{selectedRobomodel.name | uppercase}} Details</h2>
-
-    <li *ngFor="let joint of selectedRobomodel.joints">
-        <div>
-            <div>name: {{joint.name}}</div>
-        </div>
-    </li>
+<div *ngIf="selected_desc">
+    <div>Details</div>
+    <div> id: {{selected_desc.id}} </div>
+    <div> name: {{selected_desc.name}} </div>
+    <div>Number of Joints: {{selected_desc.num_joints}} </div>
+    <div>Number of Links: {{selected_desc.num_links}} </div>
 
 </div>

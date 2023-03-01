@@ -16,6 +16,9 @@
 oatpp::data::mapping::type::DTOWrapper<RoboModelDTO>
 getRoboModelDTOSharedPtrFromModel(std::shared_ptr<RoboModel> model);
 
+oatpp::data::mapping::type::DTOWrapper<RoboModelDescriptionDTO>
+getRoboModelDescDTOSharedPtrFromModel(std::shared_ptr<RoboModel> model);
+
 #include OATPP_CODEGEN_BEGIN(ApiController) //<-- Begin Codegen
 
 /**
@@ -31,25 +34,26 @@ public:
   MyController(OATPP_COMPONENT(std::shared_ptr<ObjectMapper>, objectMapper))
       : oatpp::web::server::api::ApiController(objectMapper) {
 
-    Eigen::Vector3d starting_location{0, 0, 1};
+    Eigen::Vector3d starting_location{0, 0, 0};
+    Eigen::Vector3d starting_rotation{0, 0, 0};
     std::string robo_dog_name("Robot Dog");
     robo_models_.push_back(std::shared_ptr<RoboModel>(
-        new RoboDog(0, robo_dog_name, starting_location)));
+        new RoboDog(0, robo_dog_name, starting_rotation, starting_location)));
   }
 
 public:
   ADD_CORS(getRoboModels)
   ENDPOINT("GET", "/robomodels", getRoboModels) {
 
-    auto robo_model_list_dto = RoboModelListDTO::createShared();
+    auto robo_model_desc_list_dto = RoboModelDescriptionListDTO::createShared();
 
-    robo_model_list_dto->robo_models = {};
+    robo_model_desc_list_dto->descriptions = {};
     for (std::shared_ptr<RoboModel> model : robo_models_) {
-      auto robo_model = getRoboModelDTOSharedPtrFromModel(model);
-      robo_model_list_dto->robo_models->push_back(robo_model);
+      auto robo_model_desc_dto = getRoboModelDescDTOSharedPtrFromModel(model);
+      robo_model_desc_list_dto->descriptions->push_back(robo_model_desc_dto);
     }
 
-    return createDtoResponse(Status::CODE_200, robo_model_list_dto);
+    return createDtoResponse(Status::CODE_200, robo_model_desc_list_dto);
   }
 
   ADD_CORS(getRoboModelById)

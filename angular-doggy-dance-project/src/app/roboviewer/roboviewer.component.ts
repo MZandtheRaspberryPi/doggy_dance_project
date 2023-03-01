@@ -129,10 +129,7 @@ export class RoboviewerComponent implements OnInit {
       z: [],
       marker: {
         size: 3.5,
-        color: [2, 2, 2],
-        colorscale: "Greens",
-        cmin: -20,
-        cmax: 50
+        color: "black",
       },
       showlegend: false
     };

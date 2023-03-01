@@ -7,11 +7,16 @@
 
 using namespace Eigen;
 
+enum JointType { FIXED, ROTATING, PRISMATIC };
+
 struct Joint {
 
   int number;
   std::string name;
   Eigen::Vector3d location;
+  JointType joint_type;
+  float min;
+  float max;
 };
 
 struct Link {
@@ -42,6 +47,8 @@ public:
   std::vector<Joint> getJoints();
   std::vector<Link> getLinks();
   std::vector<Joint> getEndEffectors();
+  Vector3d getBodyLocation();
+  Vector3d getBodyRotation();
 
   /*
   virtual void setRoboPosition(const float &x, const float &y, const float &z,
@@ -56,6 +63,10 @@ protected:
   void setEndEffectors(const std::vector<Joint> &joints);
   void setJoints(const std::vector<Joint> &joints);
   void setLinks(const std::vector<Link> &links);
+  void setBodyLocation(const Vector3d &location, bool recalc = true);
+  void setBodyRotation(const Vector3d &rotation, bool recalc = true);
+  Matrix4d getBodyTransform();
+  virtual void recalcJointsAndLinks() = 0;
 
 private:
   int id_;
@@ -63,6 +74,9 @@ private:
   std::vector<Link> links_;
   std::vector<Joint> joints_;
   std::vector<Joint> end_effectors_;
+  Matrix4d body_transform_matrix_;
+  Vector3d body_location_;
+  Vector3d body_rotation_;
 };
 
 class RoboDog : public RoboModel {
@@ -72,6 +86,9 @@ public:
           const Eigen::Vector3d &starting_location);
   void setRoboPosition(const float &x, const float &y, const float &z,
                        const float &roll, const float &pitch, const float &yaw);
+
+protected:
+  void recalcJointsAndLinks();
 
 private:
   float l1_ = 0.1;

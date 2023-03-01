@@ -41,9 +41,9 @@ Matrix4d getTranslationMatrix(double x_translation, double y_translation,
   return m;
 }
 
-Matrix4d getTransformMatrix(double x_rotation, double y_rotation,
-                            double z_rotation, double x_translation,
-                            double y_translation, double z_translation) {
+Matrix4d getTransformMatrix4d(double x_rotation, double y_rotation,
+                              double z_rotation, double x_translation,
+                              double y_translation, double z_translation) {
   Matrix4d rotation_m = getRotationMatrix(x_rotation, y_rotation, z_rotation);
   Matrix4d translation_m =
       getTranslationMatrix(x_translation, y_translation, z_translation);
@@ -72,18 +72,34 @@ void RoboModel::setLinks(const std::vector<Link> &links) { links_ = links; }
 
 std::vector<Link> RoboModel::getLinks() { return links_; }
 
-RoboDog::RoboDog(const int &id, const std::string &name,
-                 const Eigen::Vector3d &starting_rotation,
-                 const Eigen::Vector3d &starting_location)
-    : RoboModel(id, name) {
+void RoboModel::setBodyLocation(const Vector3d &location, bool recalc) {
+  body_location_ = location;
+  Vector3d rotation = getBodyRotation();
+  body_transform_matrix_ =
+      getTransformMatrix4d(location[0], location[1], location[2], rotation[0],
+                           rotation[1], rotation[2]);
+  if (recalc) {
+    recalcJointsAndLinks();
+  }
+}
 
+void RoboModel::setBodyRotation(const Vector3d &rotation, bool recalc) {
+  Vector3d location = getBodyLocation();
+  body_rotation_ = rotation;
+  body_transform_matrix_ =
+      getTransformMatrix4d(location[0], location[1], location[2], rotation[0],
+                           rotation[1], rotation[2]);
+  if (recalc) {
+    recalcJointsAndLinks();
+  }
+}
+
+void RoboDog::recalcJointsAndLinks() {
   std::vector<Link> links;
   std::vector<Joint> joints;
 
   // do body first
-  Matrix4d transform_matrix = getTransformMatrix(
-      starting_rotation[0], starting_rotation[1], starting_rotation[2],
-      starting_location[0], starting_location[1], starting_location[2]);
+  Matrix4d transform_matrix = getBodyTransform();
 
   Matrix4d front_left_matrix =
       transform_matrix *
@@ -156,10 +172,30 @@ RoboDog::RoboDog(const int &id, const std::string &name,
   links.push_back(link3);
   links.push_back(link4);
 
-  Joint joint1{1, "front_left_shoulder", link1_starting_coordinate};
-  Joint joint2{2, "front_right_shoulder", link2_starting_coordinate};
-  Joint joint3{3, "back_right_shoulder", link3_starting_coordinate};
-  Joint joint4{4, "back_left_shoulder", link4_starting_coordinate};
+  Joint joint1{1,
+               "front_left_shoulder",
+               link1_starting_coordinate,
+               JointType::ROTATING,
+               -2 * M_PI,
+               2 * M_PI};
+  Joint joint2{2,
+               "front_right_shoulder",
+               link2_starting_coordinate,
+               JointType::ROTATING,
+               -2 * M_PI,
+               2 * M_PI};
+  Joint joint3{3,
+               "back_right_shoulder",
+               link3_starting_coordinate,
+               JointType::ROTATING,
+               -2 * M_PI,
+               2 * M_PI};
+  Joint joint4{4,
+               "back_left_shoulder",
+               link4_starting_coordinate,
+               JointType::ROTATING,
+               -2 * M_PI,
+               2 * M_PI};
   joints.push_back(joint1);
   joints.push_back(joint2);
   joints.push_back(joint3);
@@ -193,8 +229,12 @@ RoboDog::RoboDog(const int &id, const std::string &name,
                                                intermediate_matrix(1, 3),
                                                intermediate_matrix(2, 3)};
 
-    Joint elbow_joint{joint_counter, joint_link_name + "elbow_joint",
-                      elbow_joint_coordinates};
+    Joint elbow_joint{joint_counter,
+                      joint_link_name + "elbow_joint",
+                      elbow_joint_coordinates,
+                      JointType::ROTATING,
+                      -2 * M_PI,
+                      2 * M_PI};
     joint_counter++;
     Link shoulder_to_elbow_link{link_counter,
                                 joint_link_name + "shoulder_to_elbow",
@@ -217,8 +257,12 @@ RoboDog::RoboDog(const int &id, const std::string &name,
                                                intermediate_matrix(1, 3),
                                                intermediate_matrix(2, 3)};
 
-    Joint wrist_joint{joint_counter, joint_link_name + "wrist_joint",
-                      wrist_joint_coordinates};
+    Joint wrist_joint{joint_counter,
+                      joint_link_name + "wrist_joint",
+                      wrist_joint_coordinates,
+                      JointType::ROTATING,
+                      -2 * M_PI,
+                      2 * M_PI};
     joint_counter++;
     Link elbow_to_wrist_joint_link{
         link_counter, joint_link_name + "elbow_to_wrist", elbow_joint.location,
@@ -237,8 +281,12 @@ RoboDog::RoboDog(const int &id, const std::string &name,
                                                 intermediate_matrix(1, 3),
                                                 intermediate_matrix(2, 3)};
 
-    Joint end_effector_joint{joint_counter, joint_link_name + "end_effector",
-                             end_effector_coordinates};
+    Joint end_effector_joint{joint_counter,
+                             joint_link_name + "end_effector",
+                             end_effector_coordinates,
+                             JointType::FIXED,
+                             0,
+                             0};
     joint_counter++;
     Link wrist_to_end_effector_link{
         link_counter, joint_link_name + "wrist_to_end_effector",
@@ -251,5 +299,18 @@ RoboDog::RoboDog(const int &id, const std::string &name,
   setLinks(links);
   setJoints(joints);
   setEndEffectors(end_effectors);
+}
+
+Vector3d RoboModel::getBodyLocation() { return body_location_; }
+Vector3d RoboModel::getBodyRotation() { return body_rotation_; }
+Matrix4d RoboModel::getBodyTransform() { return body_transform_matrix_; }
+
+RoboDog::RoboDog(const int &id, const std::string &name,
+                 const Eigen::Vector3d &starting_rotation,
+                 const Eigen::Vector3d &starting_location)
+    : RoboModel(id, name) {
+  setBodyLocation(starting_location, false);
+  setBodyRotation(starting_rotation, false);
+  recalcJointsAndLinks();
 }
 // setLinks(links);

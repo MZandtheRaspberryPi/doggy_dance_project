@@ -39,6 +39,9 @@ class JointDTO : public oatpp::DTO {
   DTO_FIELD(Int32, number);
   DTO_FIELD(String, name);
   DTO_FIELD(Object<CoordinateDTO>, location);
+  DTO_FIELD(Int8, joint_type); //
+  DTO_FIELD(Float32, min);
+  DTO_FIELD(Float32, max);
 };
 
 class LinkDTO : public oatpp::DTO {

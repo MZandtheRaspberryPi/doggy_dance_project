@@ -13,55 +13,76 @@ interface plotUpdateData {
   z: number[][];
 };
 
-function getXFromLinks(links: Link[]): number[] {
-  let xs: Array<number> = Array(links.length + 1);
+interface XYZData {
+  x: number[];
+  y: number[];
+  z: number[];
+}
+
+interface XYZLinksData {
+  link_groups: XYZData[];
+};
+
+// so we want to parse joints, end effectors, and links
+// parse joints and end effectors first.
+// iterate over joints, and for each joint, push newJoints.x back by joint.x, so on. push newJoints.y back by joint.y.
+// similar for end effectors
+// for links
+// take first link and split by _
+// take first_ and thats a group name
+// when we dont have that anymore start a new group
+
+function getLinkGroupsXYZ(links: Link[]): XYZLinksData {
+
+  let return_val: XYZLinksData = { link_groups: new Array(5) };
+  for (let i = 0; i < 5; i++) {
+    return_val.link_groups[i] = { x: [], y: [], z: [] };
+  }
+
+  if (links.length == 0) {
+    return return_val;
+  }
+  let group_name: string = links[0].name.split("_")[0];
+  let cur_group_index: number = 0;
   for (let i = 0; i < links.length; i++) {
-    xs[i] = links[i].start_location.x;
+    let split_name: string[] = links[i].name.split("_");
+    if (split_name.length == 0) {
+      return return_val;
+    }
+    let this_link_group: string = split_name[0];
+
+    if (this_link_group !== group_name) {
+      // add end for previous group
+      return_val.link_groups[cur_group_index].x.push(links[i - 1].end_location.x);
+      return_val.link_groups[cur_group_index].y.push(links[i - 1].end_location.y);
+      return_val.link_groups[cur_group_index].z.push(links[i - 1].end_location.z);
+
+      cur_group_index++;
+      group_name = this_link_group;
+    }
+    return_val.link_groups[cur_group_index].x.push(links[i].start_location.x);
+    return_val.link_groups[cur_group_index].y.push(links[i].start_location.y);
+    return_val.link_groups[cur_group_index].z.push(links[i].start_location.z);
   }
-  xs[links.length] = links[links.length - 1].end_location.x;
-  return xs;
+
+  // add end for previous group
+  return_val.link_groups[cur_group_index].x.push(links[links.length - 1].end_location.x);
+  return_val.link_groups[cur_group_index].y.push(links[links.length - 1].end_location.y);
+  return_val.link_groups[cur_group_index].z.push(links[links.length - 1].end_location.z);
+
+  return return_val;
 }
 
-function getYFromLinks(links: Link[]): number[] {
-  let ys: Array<number> = Array(links.length + 1);
-  for (let i = 0; i < links.length; i++) {
-    ys[i] = links[i].start_location.y;
-  }
-  ys[links.length] = links[links.length - 1].end_location.y;
-  return ys;
-}
 
-function getZFromLinks(links: Link[]): number[] {
-  let zs: Array<number> = Array(links.length + 1);
-  for (let i = 0; i < links.length; i++) {
-    zs[i] = links[i].start_location.z;
-  }
-  zs[links.length] = links[links.length - 1].end_location.z;
-  return zs;
-}
 
-function getXFromJoint(joints: Joint[]): number[] {
-  let xs: Array<number> = Array(joints.length);
+function getXYZFromJoints(joints: Joint[]): XYZData {
+  let parsedData: XYZData = { x: [], y: [], z: [] };
   for (let i = 0; i < joints.length; i++) {
-    xs[i] = joints[i].location.x;
+    parsedData.x.push(joints[i].location.x);
+    parsedData.y.push(joints[i].location.y);
+    parsedData.z.push(joints[i].location.z);
   }
-  return xs;
-}
-
-function getYFromJoint(joints: Joint[]): number[] {
-  let ys: Array<number> = Array(joints.length);
-  for (let i = 0; i < joints.length; i++) {
-    ys[i] = joints[i].location.y;
-  }
-  return ys;
-}
-
-function getZFromJoint(joints: Joint[]): number[] {
-  let zs: Array<number> = Array(joints.length);
-  for (let i = 0; i < joints.length; i++) {
-    zs[i] = joints[i].location.z;
-  }
-  return zs;
+  return parsedData;
 }
 
 @Component({
@@ -73,46 +94,32 @@ export class RoboviewerComponent implements OnInit {
 
   robomodel: Robomodel;
 
-  linkXs: number[];
-  linkYs: number[];
-  linkZs: number[];
-
   jointXs: number[];
   jointYs: number[];
   jointZs: number[];
+
+  endEffectorXs: number[];
+  endEffectorYs: number[];
+  endEffectorZs: number[];
 
   @ViewChild("Graph", { static: false })
   private Graph: ElementRef;
 
   jointData: Object;
-  linkData: Object;
+  endEffectorData: Object;
   layoutSetup: Object;
   configSetup: Object;
   graphData: Object[];
 
   constructor(private robomodelService: RobomodelService) {
-    this.linkXs = Array();
-    this.linkYs = Array();
-    this.linkZs = Array();
     this.jointXs = Array();
     this.jointYs = Array();
     this.jointZs = Array();
-    this.robomodel = { id: -1, name: "", links: [], joints: [] };
+    this.endEffectorXs = Array();
+    this.endEffectorYs = Array();
+    this.endEffectorZs = Array();
+    this.robomodel = { id: -1, name: "", links: [], joints: [], end_effectors: [] };
     this.Graph = { nativeElement: {} };
-
-    this.linkData = {
-      type: 'scatter3d',
-      mode: 'lines',
-      x: [],
-      y: [],
-      z: [],
-      line: {
-        width: 6,
-        color: [1, 1, 1],
-        colorscale: "Viridis"
-      },
-      showlegend: false
-    };
 
     this.jointData = {
       type: 'scatter3d',
@@ -130,7 +137,37 @@ export class RoboviewerComponent implements OnInit {
       showlegend: false
     };
 
-    this.graphData = [this.linkData, this.jointData];
+    this.endEffectorData = {
+      type: 'scatter3d',
+      mode: 'markers',
+      x: [],
+      y: [],
+      z: [],
+      marker: {
+        size: 3.5,
+        color: "red"
+      },
+      showlegend: false
+    };
+
+    // we will support up to 5 groups of link data
+    this.graphData = new Array(7);
+    this.graphData[0] = this.jointData;
+    this.graphData[1] = this.endEffectorData;
+    for (let i: number = 0; i < 5; i++) {
+      this.graphData[i + 2] = {
+        type: 'scatter3d',
+        mode: 'lines',
+        x: [],
+        y: [],
+        z: [],
+        line: {
+          width: 6,
+          color: "black"
+        },
+        showlegend: false
+      };
+    }
 
     this.layoutSetup = {
       autosize: true, title: 'Robo Viewer Graph',
@@ -174,18 +211,26 @@ export class RoboviewerComponent implements OnInit {
   }
 
   updateGraphOnRobotLoad(): void {
-    if (this.robomodel.id != -1) {
-      this.linkXs = getXFromLinks(this.robomodel.links);
-      this.linkYs = getYFromLinks(this.robomodel.links);
-      this.linkZs = getZFromLinks(this.robomodel.links);
 
-      this.jointXs = getXFromJoint(this.robomodel.joints);
-      this.jointYs = getYFromJoint(this.robomodel.joints);
-      this.jointZs = getZFromJoint(this.robomodel.joints);
+    let parsedJointsData: XYZData = getXYZFromJoints(this.robomodel.joints);
+    let parsedEndEffectorData: XYZData = getXYZFromJoints(this.robomodel.end_effectors);
+
+    let parsedLinkData: XYZLinksData = getLinkGroupsXYZ(this.robomodel.links);
+    if (parsedLinkData.link_groups.length < 5) {
+      for (let i: number = 0; i < 5; i++) {
+
+        let cur_link_group: XYZData = { x: [], y: [], z: [] };
+        parsedLinkData.link_groups.push(cur_link_group);
+      }
     }
 
-    let update: plotUpdateData = { x: [this.linkXs, this.jointXs], y: [this.linkYs, this.jointYs], z: [this.linkZs, this.jointZs] };
-    Plotly.restyle(this.Graph.nativeElement, update, [0, 1]);
+    let update: plotUpdateData = {
+      x: [parsedJointsData.x, parsedEndEffectorData.x, parsedLinkData.link_groups[0].x, parsedLinkData.link_groups[1].x, parsedLinkData.link_groups[2].x, parsedLinkData.link_groups[3].x, parsedLinkData.link_groups[4].x],
+      y: [parsedJointsData.y, parsedEndEffectorData.y, parsedLinkData.link_groups[0].y, parsedLinkData.link_groups[1].y, parsedLinkData.link_groups[2].y, parsedLinkData.link_groups[3].y, parsedLinkData.link_groups[4].y],
+      z: [parsedJointsData.z, parsedEndEffectorData.z, parsedLinkData.link_groups[0].z, parsedLinkData.link_groups[1].z, parsedLinkData.link_groups[2].z, parsedLinkData.link_groups[3].z, parsedLinkData.link_groups[4].z]
+    };
+
+    Plotly.restyle(this.Graph.nativeElement, update, [0, 1, 2, 3, 4, 5, 6]);
 
   }
 

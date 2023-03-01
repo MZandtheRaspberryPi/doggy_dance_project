@@ -55,7 +55,7 @@ export class RobomodelService {
   getRobomodel(id: number): Observable<Robomodel> {
     return this.http.get<Robomodel>(this.roboModelsUrl + `/${id}`)
       .pipe(
-        catchError(this.handleError<Robomodel>('getRoboModel', { id: -1, name: "", links: [], joints: [] }))
+        catchError(this.handleError<Robomodel>('getRoboModel', { id: -1, name: "", links: [], joints: [], end_effectors: [] }))
       );
   }
 

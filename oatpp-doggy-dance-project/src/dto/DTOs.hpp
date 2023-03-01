@@ -59,6 +59,7 @@ class RoboModelDTO : public oatpp::DTO {
   DTO_FIELD(String, name);
   DTO_FIELD(Vector<Object<LinkDTO>>, links);
   DTO_FIELD(Vector<Object<JointDTO>>, joints);
+  DTO_FIELD(Vector<Object<JointDTO>>, end_effectors);
 };
 
 class RoboModelListDTO : public oatpp::DTO {

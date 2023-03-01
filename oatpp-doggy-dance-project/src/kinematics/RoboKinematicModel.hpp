@@ -41,6 +41,7 @@ public:
 
   std::vector<Joint> getJoints();
   std::vector<Link> getLinks();
+  std::vector<Joint> getEndEffectors();
 
   /*
   virtual void setRoboPosition(const float &x, const float &y, const float &z,
@@ -52,6 +53,7 @@ public:
   int getId();
 
 protected:
+  void setEndEffectors(const std::vector<Joint> &joints);
   void setJoints(const std::vector<Joint> &joints);
   void setLinks(const std::vector<Link> &links);
 
@@ -60,6 +62,7 @@ private:
   std::string name_;
   std::vector<Link> links_;
   std::vector<Joint> joints_;
+  std::vector<Joint> end_effectors_;
 };
 
 class RoboDog : public RoboModel {

@@ -62,6 +62,12 @@ std::string RoboModel::getName() { return name_; }
 
 std::vector<Joint> RoboModel::getJoints() { return joints_; }
 
+std::vector<Joint> RoboModel::getEndEffectors() { return end_effectors_; }
+
+void RoboModel::setEndEffectors(const std::vector<Joint> &joints) {
+  end_effectors_ = joints;
+}
+
 void RoboModel::setLinks(const std::vector<Link> &links) { links_ = links; }
 
 std::vector<Link> RoboModel::getLinks() { return links_; }
@@ -102,10 +108,10 @@ RoboDog::RoboDog(const int &id, const std::string &name,
 
   Matrix4d back_left_matrix =
       transform_matrix *
-      (getYRotationMatrix(-M_PI) + Matrix4d{{0, 0, 0, -body_length_ / 2},
-                                            {0, 0, 0, 0},
-                                            {0, 0, 0, -body_width_ / 2},
-                                            {0, 0, 0, 0}});
+      (getYRotationMatrix(-M_PI / 2) + Matrix4d{{0, 0, 0, -body_length_ / 2},
+                                                {0, 0, 0, 0},
+                                                {0, 0, 0, -body_width_ / 2},
+                                                {0, 0, 0, 0}});
 
   Eigen::Vector3d link1_starting_coordinate = {front_left_matrix(0, 3),
                                                front_left_matrix(1, 3),
@@ -114,7 +120,7 @@ RoboDog::RoboDog(const int &id, const std::string &name,
                                              front_right_matrix(1, 3),
                                              front_right_matrix(2, 3)};
 
-  Link link1{1, "front_body", link1_starting_coordinate,
+  Link link1{1, "body_front", link1_starting_coordinate,
              link1_ending_coordinate};
 
   Eigen::Vector3d link2_starting_coordinate = {front_right_matrix(0, 3),
@@ -124,7 +130,7 @@ RoboDog::RoboDog(const int &id, const std::string &name,
                                              back_right_matrix(1, 3),
                                              back_right_matrix(2, 3)};
 
-  Link link2{2, "right_body", link2_starting_coordinate,
+  Link link2{2, "body_right", link2_starting_coordinate,
              link2_ending_coordinate};
 
   Eigen::Vector3d link3_starting_coordinate = {back_right_matrix(0, 3),
@@ -133,7 +139,7 @@ RoboDog::RoboDog(const int &id, const std::string &name,
   Eigen::Vector3d link3_ending_coordinate = {
       back_left_matrix(0, 3), back_left_matrix(1, 3), back_left_matrix(2, 3)};
 
-  Link link3{3, "back_body", link3_starting_coordinate,
+  Link link3{3, "body_back", link3_starting_coordinate,
              link3_ending_coordinate};
 
   Eigen::Vector3d link4_starting_coordinate = {
@@ -142,14 +148,13 @@ RoboDog::RoboDog(const int &id, const std::string &name,
                                              front_left_matrix(1, 3),
                                              front_left_matrix(2, 3)};
 
-  Link link4{4, "left_body", link4_starting_coordinate,
+  Link link4{4, "body_left", link4_starting_coordinate,
              link4_ending_coordinate};
 
   links.push_back(link1);
   links.push_back(link2);
   links.push_back(link3);
   links.push_back(link4);
-  setLinks(links);
 
   Joint joint1{1, "front_left_shoulder", link1_starting_coordinate};
   Joint joint2{2, "front_right_shoulder", link2_starting_coordinate};
@@ -159,6 +164,92 @@ RoboDog::RoboDog(const int &id, const std::string &name,
   joints.push_back(joint2);
   joints.push_back(joint3);
   joints.push_back(joint4);
+
+  std::vector<Joint> end_effectors;
+  // orer here should be same as initial joints order so that we can index and
+  // find starting location easily, by looking at index 0 in the joints array
+  // for index 0 in the leg_matrix_vect
+  std::vector<std::string> joint_link_names = {"legfl_", "legfr_", "legbr_",
+                                               "legbl_"};
+  std::vector<Matrix4d> leg_matrix_vect = {front_left_matrix,
+                                           front_right_matrix,
+                                           back_right_matrix, back_left_matrix};
+  int theta1, theta2, theta3;
+  theta1 = theta2 = theta3 = 0;
+  theta2 = -M_PI / 8;
+  theta3 = -M_PI / 4;
+  int joint_counter, link_counter;
+  joint_counter = link_counter = 5;
+  for (int i = 0; i < leg_matrix_vect.size(); i++) {
+    const Matrix4d &base_to_leg_matrix = leg_matrix_vect[i];
+    const std::string &joint_link_name = joint_link_names[i];
+    // here t01 indicates matrix to transform from 0 to 1 joint
+    Matrix4d t01{{cos(theta1), -sin(theta1), 0, -l1_ * cos(theta1)},
+                 {sin(theta1), cos(theta1), 0, -l1_ * sin(theta1)},
+                 {1, 0, 0, 0},
+                 {0, 0, 0, 1}};
+    Matrix4d intermediate_matrix = base_to_leg_matrix * t01;
+    Eigen::Vector3d elbow_joint_coordinates = {intermediate_matrix(0, 3),
+                                               intermediate_matrix(1, 3),
+                                               intermediate_matrix(2, 3)};
+
+    Joint elbow_joint{joint_counter, joint_link_name + "elbow_joint",
+                      elbow_joint_coordinates};
+    joint_counter++;
+    Link shoulder_to_elbow_link{link_counter,
+                                joint_link_name + "shoulder_to_elbow",
+                                joints[i].location, elbow_joint_coordinates};
+    link_counter++;
+    joints.push_back(elbow_joint);
+    links.push_back(shoulder_to_elbow_link);
+
+    Matrix4d t12{{0, 0, -1, 0}, {-1, 0, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
+
+    intermediate_matrix = intermediate_matrix * t12;
+
+    Matrix4d t23{{cos(theta2), -sin(theta2), 0, l2_ * cos(theta2)},
+                 {sin(theta2), cos(theta2), 0, l2_ * sin(theta2)},
+                 {0, 0, 1, 0},
+                 {0, 0, 0, 1}};
+    intermediate_matrix = intermediate_matrix * t23;
+
+    Eigen::Vector3d wrist_joint_coordinates = {intermediate_matrix(0, 3),
+                                               intermediate_matrix(1, 3),
+                                               intermediate_matrix(2, 3)};
+
+    Joint wrist_joint{joint_counter, joint_link_name + "wrist_joint",
+                      wrist_joint_coordinates};
+    joint_counter++;
+    Link elbow_to_wrist_joint_link{
+        link_counter, joint_link_name + "elbow_to_wrist", elbow_joint.location,
+        wrist_joint_coordinates};
+    link_counter++;
+    joints.push_back(wrist_joint);
+    links.push_back(elbow_to_wrist_joint_link);
+    Matrix4d t34{{cos(theta3), -sin(theta3), 0, l3_ * cos(theta3)},
+                 {sin(theta3), cos(theta3), 0, l3_ * sin(theta3)},
+                 {0, 0, 1, 0},
+                 {0, 0, 0, 1}};
+
+    intermediate_matrix = intermediate_matrix * t34;
+
+    Eigen::Vector3d end_effector_coordinates = {intermediate_matrix(0, 3),
+                                                intermediate_matrix(1, 3),
+                                                intermediate_matrix(2, 3)};
+
+    Joint end_effector_joint{joint_counter, joint_link_name + "end_effector",
+                             end_effector_coordinates};
+    joint_counter++;
+    Link wrist_to_end_effector_link{
+        link_counter, joint_link_name + "wrist_to_end_effector",
+        wrist_joint.location, end_effector_coordinates};
+    link_counter++;
+    end_effectors.push_back(end_effector_joint);
+    links.push_back(wrist_to_end_effector_link);
+  }
+
+  setLinks(links);
   setJoints(joints);
+  setEndEffectors(end_effectors);
 }
 // setLinks(links);

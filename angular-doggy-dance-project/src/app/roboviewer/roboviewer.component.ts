@@ -87,6 +87,7 @@ export class RoboviewerComponent implements OnInit {
   jointData: Object;
   linkData: Object;
   layoutSetup: Object;
+  configSetup: Object;
   graphData: Object[];
 
   constructor(private robomodelService: RobomodelService) {
@@ -131,7 +132,30 @@ export class RoboviewerComponent implements OnInit {
 
     this.graphData = [this.linkData, this.jointData];
 
-    this.layoutSetup = { autosize: true, title: 'Robo Viewer Graph', scene: { camera: { up: { x: 0, y: 1, z: 0 } } } };
+    this.layoutSetup = {
+      autosize: true, title: 'Robo Viewer Graph',
+      scene: {
+        camera: { up: { x: 0, y: 1, z: 0 } },
+        aspectmode: "manual",
+        aspectratio: {
+          x: 1, y: 1, z: 1,
+        },
+        xaxis: {
+          nticks: 4,
+          range: [-1, 1],
+        },
+        yaxis: {
+          nticks: 4,
+          range: [-1, 1],
+        },
+        zaxis: {
+          nticks: 4,
+          range: [-1, 1],
+        }
+      },
+    };
+
+    this.configSetup = { responsive: true };
 
   }
 
@@ -143,7 +167,7 @@ export class RoboviewerComponent implements OnInit {
       this.Graph.nativeElement,
       this.graphData,
       this.layoutSetup,
-      {}
+      this.configSetup
     );
 
     this.getRobomodels();
@@ -173,43 +197,4 @@ export class RoboviewerComponent implements OnInit {
         complete: () => this.updateGraphOnRobotLoad()
       });
   }
-
-  /*
-  public graph = {
-    data: [
-      {
-        type: 'scatter3d',
-        mode: 'lines',
-        x: this.linkXs,
-        y: this.linkYs,
-        z: this.linkZs,
-        line: {
-          width: 6,
-          color: [1, 1, 1],
-          colorscale: "Viridis"
-        },
-        showlegend: false
-      },
-      {
-        type: 'scatter3d',
-        mode: 'markers',
-        x: this.jointXs,
-        y: this.jointYs,
-        z: this.jointZs,
-        marker: {
-          size: 3.5,
-          color: [2, 2, 2],
-          colorscale: "Greens",
-          cmin: -20,
-          cmax: 50
-        },
-        showlegend: false
-      }
-    ],
-    layout: { autosize: true, title: 'Robo Viewer Graph' }
-  };
-  */
-
-
-
 }

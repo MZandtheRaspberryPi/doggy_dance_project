@@ -41,9 +41,9 @@ Matrix4d getTranslationMatrix(double x_translation, double y_translation,
   return m;
 }
 
-Matrix4d getTransformMatrix(double x_translation, double y_translation,
-                            double z_translation, double x_rotation,
-                            double y_rotation, double z_rotation) {
+Matrix4d getTransformMatrix(double x_rotation, double y_rotation,
+                            double z_rotation, double x_translation,
+                            double y_translation, double z_translation) {
   Matrix4d rotation_m = getRotationMatrix(x_rotation, y_rotation, z_rotation);
   Matrix4d translation_m =
       getTranslationMatrix(x_translation, y_translation, z_translation);
@@ -78,25 +78,34 @@ RoboDog::RoboDog(const int &id, const std::string &name,
   Matrix4d transform_matrix = getTransformMatrix(
       starting_rotation[0], starting_rotation[1], starting_rotation[2],
       starting_location[0], starting_location[1], starting_location[2]);
-  std::cout << transform_matrix << std::endl;
 
   Matrix4d front_left_matrix =
-      transform_matrix * getYRotationMatrix(-M_PI) *
-      getTranslationMatrix(body_length_ / 2, 0, -body_width_ / 2);
-  std::cout << front_left_matrix << std::endl;
+      transform_matrix *
+      (getYRotationMatrix(-M_PI / 2) + Matrix4d{{0, 0, 0, body_length_ / 2},
+                                                {0, 0, 0, 0},
+                                                {0, 0, 0, -body_width_ / 2},
+                                                {0, 0, 0, 0}});
 
   Matrix4d front_right_matrix =
-      transform_matrix * getYRotationMatrix(M_PI) *
-      getTranslationMatrix(body_length_ / 2, 0, body_width_ / 2);
-  std::cout << front_right_matrix << std::endl;
+      transform_matrix *
+      (getYRotationMatrix(M_PI / 2) + Matrix4d{{0, 0, 0, body_length_ / 2},
+                                               {0, 0, 0, 0},
+                                               {0, 0, 0, body_width_ / 2},
+                                               {0, 0, 0, 0}});
 
   Matrix4d back_right_matrix =
-      transform_matrix * getYRotationMatrix(M_PI) *
-      getTranslationMatrix(-body_length_ / 2, 0, body_width_ / 2);
+      transform_matrix *
+      (getYRotationMatrix(M_PI / 2) + Matrix4d{{0, 0, 0, -body_length_ / 2},
+                                               {0, 0, 0, 0},
+                                               {0, 0, 0, body_width_ / 2},
+                                               {0, 0, 0, 0}});
 
   Matrix4d back_left_matrix =
-      transform_matrix * getYRotationMatrix(-M_PI) *
-      getTranslationMatrix(-body_length_ / 2, 0, -body_width_ / 2);
+      transform_matrix *
+      (getYRotationMatrix(-M_PI) + Matrix4d{{0, 0, 0, -body_length_ / 2},
+                                            {0, 0, 0, 0},
+                                            {0, 0, 0, -body_width_ / 2},
+                                            {0, 0, 0, 0}});
 
   Eigen::Vector3d link1_starting_coordinate = {front_left_matrix(0, 3),
                                                front_left_matrix(1, 3),

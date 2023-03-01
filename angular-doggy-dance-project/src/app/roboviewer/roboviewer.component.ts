@@ -1,10 +1,17 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 
 import { Joint } from '../joint';
 import { Link } from '../link';
 import { RobomodelService } from '../robomodel.service';
 import { Robomodel } from '../robomodel';
 
+declare var Plotly: any;
+
+interface plotUpdateData {
+  x: number[][];
+  y: number[][];
+  z: number[][];
+};
 
 function getXFromLinks(links: Link[]): number[] {
   let xs: Array<number> = Array(links.length + 1);
@@ -59,47 +66,102 @@ function getZFromJoint(joints: Joint[]): number[] {
 
 @Component({
   selector: 'app-roboviewer',
-  template: `
-  <plotly-plot [data]="graph.data" [layout]="graph.layout"
-       [useResizeHandler]="true" [style]="{position: 'relative', width: '100%', height: '100%'}">
-  </plotly-plot>`,
+  templateUrl: './roboviewer.component.html',
+  styleUrls: ['./roboviewer.component.css']
 })
 export class RoboviewerComponent implements OnInit {
 
-  robomodel?: Robomodel;
+  robomodel: Robomodel;
 
-  linkXs: number[] = Array();
-  linkYs: number[] = Array();
-  linkZs: number[] = Array();
+  linkXs: number[];
+  linkYs: number[];
+  linkZs: number[];
 
-  jointXs: number[] = Array();
-  jointYs: number[] = Array();
-  jointZs: number[] = Array();
+  jointXs: number[];
+  jointYs: number[];
+  jointZs: number[];
 
-  constructor(private robomodelService: RobomodelService) { }
+  @ViewChild("Graph", { static: false })
+  private Graph: ElementRef;
+
+  jointData: Object;
+  linkData: Object;
+  layoutSetup: Object;
+  graphData: Object[];
+
+  constructor(private robomodelService: RobomodelService) {
+    this.linkXs = Array();
+    this.linkYs = Array();
+    this.linkZs = Array();
+    this.jointXs = Array();
+    this.jointYs = Array();
+    this.jointZs = Array();
+    this.robomodel = { id: -1, name: "", links: [], joints: [] };
+    this.Graph = { nativeElement: {} };
+
+    this.linkData = {
+      type: 'scatter3d',
+      mode: 'lines',
+      x: [],
+      y: [],
+      z: [],
+      line: {
+        width: 6,
+        color: [1, 1, 1],
+        colorscale: "Viridis"
+      },
+      showlegend: false
+    };
+
+    this.jointData = {
+      type: 'scatter3d',
+      mode: 'markers',
+      x: [],
+      y: [],
+      z: [],
+      marker: {
+        size: 3.5,
+        color: [2, 2, 2],
+        colorscale: "Greens",
+        cmin: -20,
+        cmax: 50
+      },
+      showlegend: false
+    };
+
+    this.graphData = [this.linkData, this.jointData];
+
+    this.layoutSetup = { autosize: true, title: 'Robo Viewer Graph', scene: { camera: { up: { x: 0, y: 1, z: 0 } } } };
+
+  }
 
   ngOnInit(): void {
+  }
+
+  ngAfterViewInit() {
+    Plotly.newPlot(
+      this.Graph.nativeElement,
+      this.graphData,
+      this.layoutSetup,
+      {}
+    );
+
     this.getRobomodels();
   }
 
   updateGraphOnRobotLoad(): void {
-    if (typeof this.robomodel !== 'undefined') {
-      this.linkXs = getXFromLinks(this.robomodel!.links);
-      this.linkYs = getYFromLinks(this.robomodel!.links);
-      this.linkZs = getZFromLinks(this.robomodel!.links);
+    if (this.robomodel.id != -1) {
+      this.linkXs = getXFromLinks(this.robomodel.links);
+      this.linkYs = getYFromLinks(this.robomodel.links);
+      this.linkZs = getZFromLinks(this.robomodel.links);
 
-      this.jointXs = getXFromJoint(this.robomodel!.joints);
-      this.jointYs = getYFromJoint(this.robomodel!.joints);
-      this.jointZs = getZFromJoint(this.robomodel!.joints);
+      this.jointXs = getXFromJoint(this.robomodel.joints);
+      this.jointYs = getYFromJoint(this.robomodel.joints);
+      this.jointZs = getZFromJoint(this.robomodel.joints);
     }
 
-    this.graph.data[0].x = this.linkXs;
-    this.graph.data[0].y = this.linkYs;
-    this.graph.data[0].z = this.linkZs;
-
-    this.graph.data[1].x = this.jointXs;
-    this.graph.data[1].y = this.jointYs;
-    this.graph.data[1].z = this.jointZs;
+    let update: plotUpdateData = { x: [this.linkXs, this.jointXs], y: [this.linkYs, this.jointYs], z: [this.linkZs, this.jointZs] };
+    Plotly.restyle(this.Graph.nativeElement, update, [0, 1]);
 
   }
 
@@ -112,6 +174,7 @@ export class RoboviewerComponent implements OnInit {
       });
   }
 
+  /*
   public graph = {
     data: [
       {
@@ -145,6 +208,7 @@ export class RoboviewerComponent implements OnInit {
     ],
     layout: { autosize: true, title: 'Robo Viewer Graph' }
   };
+  */
 
 
 

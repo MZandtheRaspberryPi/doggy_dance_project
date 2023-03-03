@@ -27,6 +27,14 @@ struct Link {
   Eigen::Vector3d end_location;
 };
 
+struct Robomodel {
+  int id;
+  std::string name;
+  std::vector<Link> links;
+  std::vector<Joint> joints;
+  std::vector<Joint> end_effectors;
+};
+
 Matrix4d getXRotationMatrix4d(double x_rotation);
 Matrix4d getYRotationMatrix4d(double y_rotation);
 Matrix4d getZRotationMatrix4d(double z_rotation);
@@ -49,6 +57,7 @@ public:
   std::vector<Joint> getEndEffectors();
   Vector3d getBodyLocation();
   Vector3d getBodyRotation();
+  Matrix4d getBodyTransform();
 
   /*
   virtual void setRoboPosition(const float &x, const float &y, const float &z,
@@ -65,7 +74,7 @@ protected:
   void setLinks(const std::vector<Link> &links);
   void setBodyLocation(const Vector3d &location, bool recalc = true);
   void setBodyRotation(const Vector3d &rotation, bool recalc = true);
-  Matrix4d getBodyTransform();
+  void setBodyTransform(const Matrix4d &transform);
   virtual void recalcJointsAndLinks() = 0;
 
 private:
@@ -91,10 +100,10 @@ protected:
   void recalcJointsAndLinks();
 
 private:
-  float l1_ = 0.1;
-  float l2_ = 0.4;
-  float l3_ = 0.4;
+  const static float l1;
+  const static float l2;
+  const static float l3;
 
-  float body_length_ = 1;
-  float body_width_ = 0.4;
+  const static float body_length;
+  const static float body_width;
 };

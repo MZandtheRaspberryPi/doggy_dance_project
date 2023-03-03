@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 
 
-set(project_name doggy-dance-project)
+set(project_name robo-dance-project)
 set(CMAKE_CXX_STANDARD 17)
 
 project(${project_name})

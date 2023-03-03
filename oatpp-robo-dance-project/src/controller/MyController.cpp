@@ -58,6 +58,9 @@ getRoboModelDTOSharedPtrFromModel(std::shared_ptr<RoboModel> model) {
     dto_joint->location = joint_location;
     dto_joint->name = joint.name;
     dto_joint->number = joint.number;
+    dto_joint->joint_type = joint.joint_type;
+    dto_joint->min = joint.min;
+    dto_joint->max = joint.max;
     robo_model->end_effectors->push_back(dto_joint);
   }
 

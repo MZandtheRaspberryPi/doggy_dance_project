@@ -14,12 +14,12 @@ COPY ./ ./app
 
 RUN cd /app && mkdir build && cd build && cmake .. && make
 
-RUN mkdir /entrypoint && cp /app/build/doggy-dance-project-exe /entrypoint
+RUN mkdir /entrypoint && cp /app/build/robo-dance-project-exe /entrypoint
 
 RUN rm -rf /app
 
 FROM alpine:3.17
 RUN apk add cmake g++ make
-COPY --from=restapi-build /entrypoint/doggy-dance-project-exe /doggy-dance-project-exe
+COPY --from=restapi-build /entrypoint/robo-dance-project-exe /robo-dance-project-exe
 EXPOSE 8000
-ENTRYPOINT ["/doggy-dance-project-exe"]
+ENTRYPOINT ["/robo-dance-project-exe"]

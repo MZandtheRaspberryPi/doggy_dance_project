@@ -74,59 +74,79 @@ std::vector<Link> RoboModel::getLinks() { return links_; }
 
 void RoboModel::setBodyLocation(const Vector3d &location, bool recalc) {
   body_location_ = location;
-  Vector3d rotation = getBodyRotation();
-  body_transform_matrix_ =
-      getTransformMatrix4d(location[0], location[1], location[2], rotation[0],
-                           rotation[1], rotation[2]);
   if (recalc) {
+    Vector3d rotation = getBodyRotation();
+    body_transform_matrix_ =
+        getTransformMatrix4d(location[0], location[1], location[2], rotation[0],
+                             rotation[1], rotation[2]);
     recalcJointsAndLinks();
   }
+}
+
+void RoboModel::setBodyTransform(const Matrix4d &transform) {
+  body_transform_matrix_ = transform;
 }
 
 void RoboModel::setBodyRotation(const Vector3d &rotation, bool recalc) {
   Vector3d location = getBodyLocation();
-  body_rotation_ = rotation;
-  body_transform_matrix_ =
-      getTransformMatrix4d(location[0], location[1], location[2], rotation[0],
-                           rotation[1], rotation[2]);
   if (recalc) {
+
+    body_rotation_ = rotation;
+    body_transform_matrix_ =
+        getTransformMatrix4d(location[0], location[1], location[2], rotation[0],
+                             rotation[1], rotation[2]);
     recalcJointsAndLinks();
   }
 }
 
+const float RoboDog::l1 = 0.1;
+const float RoboDog::l2 = 0.4;
+const float RoboDog::l3 = 0.4;
+
+const float RoboDog::body_length = 1;
+const float RoboDog::body_width = 0.4;
+
 void RoboDog::recalcJointsAndLinks() {
   std::vector<Link> links;
   std::vector<Joint> joints;
+  std::vector<Joint> end_effectors;
+
+  Vector3d rotation = getBodyRotation();
+  Vector3d location = getBodyLocation();
+  Matrix4d transform_matrix =
+      getTransformMatrix4d(location[0], location[1], location[2], rotation[0],
+                           rotation[1], rotation[2]);
+
+  setBodyTransform(transform_matrix);
 
   // do body first
-  Matrix4d transform_matrix = getBodyTransform();
 
   Matrix4d front_left_matrix =
       transform_matrix *
-      (getYRotationMatrix(-M_PI / 2) + Matrix4d{{0, 0, 0, body_length_ / 2},
+      (getYRotationMatrix(-M_PI / 2) + Matrix4d{{0, 0, 0, body_length / 2},
                                                 {0, 0, 0, 0},
-                                                {0, 0, 0, -body_width_ / 2},
+                                                {0, 0, 0, -body_width / 2},
                                                 {0, 0, 0, 0}});
 
   Matrix4d front_right_matrix =
       transform_matrix *
-      (getYRotationMatrix(M_PI / 2) + Matrix4d{{0, 0, 0, body_length_ / 2},
+      (getYRotationMatrix(M_PI / 2) + Matrix4d{{0, 0, 0, body_length / 2},
                                                {0, 0, 0, 0},
-                                               {0, 0, 0, body_width_ / 2},
+                                               {0, 0, 0, body_width / 2},
                                                {0, 0, 0, 0}});
 
   Matrix4d back_right_matrix =
       transform_matrix *
-      (getYRotationMatrix(M_PI / 2) + Matrix4d{{0, 0, 0, -body_length_ / 2},
+      (getYRotationMatrix(M_PI / 2) + Matrix4d{{0, 0, 0, -body_length / 2},
                                                {0, 0, 0, 0},
-                                               {0, 0, 0, body_width_ / 2},
+                                               {0, 0, 0, body_width / 2},
                                                {0, 0, 0, 0}});
 
   Matrix4d back_left_matrix =
       transform_matrix *
-      (getYRotationMatrix(-M_PI / 2) + Matrix4d{{0, 0, 0, -body_length_ / 2},
+      (getYRotationMatrix(-M_PI / 2) + Matrix4d{{0, 0, 0, -body_length / 2},
                                                 {0, 0, 0, 0},
-                                                {0, 0, 0, -body_width_ / 2},
+                                                {0, 0, 0, -body_width / 2},
                                                 {0, 0, 0, 0}});
 
   Eigen::Vector3d link1_starting_coordinate = {front_left_matrix(0, 3),
@@ -201,7 +221,6 @@ void RoboDog::recalcJointsAndLinks() {
   joints.push_back(joint3);
   joints.push_back(joint4);
 
-  std::vector<Joint> end_effectors;
   // orer here should be same as initial joints order so that we can index and
   // find starting location easily, by looking at index 0 in the joints array
   // for index 0 in the leg_matrix_vect
@@ -220,8 +239,8 @@ void RoboDog::recalcJointsAndLinks() {
     const Matrix4d &base_to_leg_matrix = leg_matrix_vect[i];
     const std::string &joint_link_name = joint_link_names[i];
     // here t01 indicates matrix to transform from 0 to 1 joint
-    Matrix4d t01{{cos(theta1), -sin(theta1), 0, -l1_ * cos(theta1)},
-                 {sin(theta1), cos(theta1), 0, -l1_ * sin(theta1)},
+    Matrix4d t01{{cos(theta1), -sin(theta1), 0, -l1 * cos(theta1)},
+                 {sin(theta1), cos(theta1), 0, -l1 * sin(theta1)},
                  {1, 0, 0, 0},
                  {0, 0, 0, 1}};
     Matrix4d intermediate_matrix = base_to_leg_matrix * t01;
@@ -247,8 +266,8 @@ void RoboDog::recalcJointsAndLinks() {
 
     intermediate_matrix = intermediate_matrix * t12;
 
-    Matrix4d t23{{cos(theta2), -sin(theta2), 0, l2_ * cos(theta2)},
-                 {sin(theta2), cos(theta2), 0, l2_ * sin(theta2)},
+    Matrix4d t23{{cos(theta2), -sin(theta2), 0, l2 * cos(theta2)},
+                 {sin(theta2), cos(theta2), 0, l2 * sin(theta2)},
                  {0, 0, 1, 0},
                  {0, 0, 0, 1}};
     intermediate_matrix = intermediate_matrix * t23;
@@ -270,8 +289,8 @@ void RoboDog::recalcJointsAndLinks() {
     link_counter++;
     joints.push_back(wrist_joint);
     links.push_back(elbow_to_wrist_joint_link);
-    Matrix4d t34{{cos(theta3), -sin(theta3), 0, l3_ * cos(theta3)},
-                 {sin(theta3), cos(theta3), 0, l3_ * sin(theta3)},
+    Matrix4d t34{{cos(theta3), -sin(theta3), 0, l3 * cos(theta3)},
+                 {sin(theta3), cos(theta3), 0, l3 * sin(theta3)},
                  {0, 0, 1, 0},
                  {0, 0, 0, 1}};
 

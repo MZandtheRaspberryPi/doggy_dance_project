@@ -12,6 +12,7 @@ export interface Joint {
   axis: string;
   location: Coordinate;
   joint_type: JointType;
-  min: number;
-  max: number;
+  current_angle_radians: number;
+  min_angle_radians: number;
+  max_angle_radians: number;
 }

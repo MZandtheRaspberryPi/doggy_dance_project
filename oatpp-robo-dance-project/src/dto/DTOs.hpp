@@ -16,6 +16,7 @@ class RoboModelDescriptionDTO : public oatpp::DTO {
   DTO_FIELD(String, name);
   DTO_FIELD(Int32, num_links);
   DTO_FIELD(Int32, num_joints);
+  DTO_FIELD(Int32, num_end_effectors);
 };
 
 class RoboModelDescriptionListDTO : public oatpp::DTO {
@@ -39,9 +40,10 @@ class JointDTO : public oatpp::DTO {
   DTO_FIELD(Int32, number);
   DTO_FIELD(String, name);
   DTO_FIELD(Object<CoordinateDTO>, location);
-  DTO_FIELD(Int8, joint_type); //
-  DTO_FIELD(Float32, min);
-  DTO_FIELD(Float32, max);
+  DTO_FIELD(Int8, joint_type);
+  DTO_FIELD(Float32, current_angle_radians);
+  DTO_FIELD(Float32, min_angle_radians);
+  DTO_FIELD(Float32, max_angle_radians);
 };
 
 class LinkDTO : public oatpp::DTO {

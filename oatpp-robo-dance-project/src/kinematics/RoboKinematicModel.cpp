@@ -50,53 +50,9 @@ Matrix4d getTransformMatrix4d(double x_rotation, double y_rotation,
   return rotation_m * translation_m;
 }
 
-RoboModel::RoboModel(const int &id, const std::string &name)
-    : id_(id), name_(name) {}
-
-void RoboModel::setJoints(const std::vector<Joint> &joints) {
-  joints_ = joints;
-}
-
-int RoboModel::getId() { return id_; }
-std::string RoboModel::getName() { return name_; }
-
-std::vector<Joint> RoboModel::getJoints() { return joints_; }
-
-std::vector<Joint> RoboModel::getEndEffectors() { return end_effectors_; }
-
-void RoboModel::setEndEffectors(const std::vector<Joint> &joints) {
-  end_effectors_ = joints;
-}
-
-void RoboModel::setLinks(const std::vector<Link> &links) { links_ = links; }
-
-std::vector<Link> RoboModel::getLinks() { return links_; }
-
-void RoboModel::setBodyLocation(const Vector3d &location, bool recalc) {
-  body_location_ = location;
-  if (recalc) {
-    Vector3d rotation = getBodyRotation();
-    body_transform_matrix_ =
-        getTransformMatrix4d(location[0], location[1], location[2], rotation[0],
-                             rotation[1], rotation[2]);
-    recalcJointsAndLinks();
-  }
-}
-
-void RoboModel::setBodyTransform(const Matrix4d &transform) {
-  body_transform_matrix_ = transform;
-}
-
-void RoboModel::setBodyRotation(const Vector3d &rotation, bool recalc) {
-  Vector3d location = getBodyLocation();
-  if (recalc) {
-
-    body_rotation_ = rotation;
-    body_transform_matrix_ =
-        getTransformMatrix4d(location[0], location[1], location[2], rotation[0],
-                             rotation[1], rotation[2]);
-    recalcJointsAndLinks();
-  }
+Vector3d getCoordinateFromTransformMatrix(const Matrix4d &matrix) {
+  Eigen::Vector3d coordinates = {matrix(0, 3), matrix(1, 3), matrix(2, 3)};
+  return coordinates;
 }
 
 const float RoboDog::l1 = 0.1;
@@ -106,20 +62,50 @@ const float RoboDog::l3 = 0.4;
 const float RoboDog::body_length = 1;
 const float RoboDog::body_width = 0.4;
 
-void RoboDog::recalcJointsAndLinks() {
-  std::vector<Link> links;
-  std::vector<Joint> joints;
-  std::vector<Joint> end_effectors;
+const int RoboDog::num_joints = 12;
+const int RoboDog::num_links = 16;
+const int RoboDog::num_end_effectors = 4;
 
-  Vector3d rotation = getBodyRotation();
-  Vector3d location = getBodyLocation();
-  Matrix4d transform_matrix =
-      getTransformMatrix4d(location[0], location[1], location[2], rotation[0],
-                           rotation[1], rotation[2]);
+const int RoboDog::id = 0;
+const std::string RoboDog::name = "robo_dog";
 
-  setBodyTransform(transform_matrix);
+const std::string RoboDog::front_left_leg_prefix = "legfl_";
+const std::string RoboDog::front_right_leg_prefix = "legfr_";
+const std::string RoboDog::back_left_leg_prefix = "legbr_";
+const std::string RoboDog::back_right_leg_prefix = "legbl_";
 
-  // do body first
+const std::string RoboDog::body_prefix = "body_";
+
+const std::string RoboDog::shoulder_str = "shoulder";
+const std::string RoboDog::elbow_str = "elbow";
+const std::string RoboDog::wrist_str = "wrist";
+const std::string RoboDog::end_effector_str = "end_effector";
+
+const std::unordered_map<std::string, int> RoboDog::joint_str_to_id_mapping = {
+    {RoboDog::front_left_leg_prefix + RoboDog::shoulder_str, 1},
+    {RoboDog::front_left_leg_prefix + RoboDog::elbow_str, 2},
+    {RoboDog::front_left_leg_prefix + RoboDog::wrist_str, 3},
+    {RoboDog::front_left_leg_prefix + RoboDog::end_effector_str, 4},
+    {RoboDog::front_right_leg_prefix + RoboDog::shoulder_str, 5},
+    {RoboDog::front_right_leg_prefix + RoboDog::elbow_str, 6},
+    {RoboDog::front_right_leg_prefix + RoboDog::wrist_str, 7},
+    {RoboDog::front_right_leg_prefix + RoboDog::end_effector_str, 8},
+    {RoboDog::back_left_leg_prefix + RoboDog::shoulder_str, 9},
+    {RoboDog::back_left_leg_prefix + RoboDog::elbow_str, 10},
+    {RoboDog::back_left_leg_prefix + RoboDog::wrist_str, 11},
+    {RoboDog::back_left_leg_prefix + RoboDog::end_effector_str, 12},
+    {RoboDog::back_right_leg_prefix + RoboDog::shoulder_str, 13},
+    {RoboDog::back_right_leg_prefix + RoboDog::elbow_str, 14},
+    {RoboDog::back_right_leg_prefix + RoboDog::wrist_str, 15},
+    {RoboDog::back_right_leg_prefix + RoboDog::end_effector_str, 16},
+};
+
+std::unordered_map<std::string, Matrix4d>
+RoboDog::getBaseToShoulderTransforms(const Vector3d &body_location,
+                                     const Vector3d &body_rotation) {
+  Matrix4d transform_matrix = getTransformMatrix4d(
+      body_location[0], body_location[1], body_location[2], body_rotation[0],
+      body_rotation[1], body_rotation[2]);
 
   Matrix4d front_left_matrix =
       transform_matrix *
@@ -149,187 +135,274 @@ void RoboDog::recalcJointsAndLinks() {
                                                 {0, 0, 0, -body_width / 2},
                                                 {0, 0, 0, 0}});
 
-  Eigen::Vector3d link1_starting_coordinate = {front_left_matrix(0, 3),
-                                               front_left_matrix(1, 3),
-                                               front_left_matrix(2, 3)};
-  Eigen::Vector3d link1_ending_coordinate = {front_right_matrix(0, 3),
-                                             front_right_matrix(1, 3),
-                                             front_right_matrix(2, 3)};
+  std::unordered_map<std::string, Matrix4d> shoulder_transform_map;
+  shoulder_transform_map[front_left_leg_prefix] = front_left_matrix;
+  shoulder_transform_map[front_right_leg_prefix] = front_right_matrix;
+  shoulder_transform_map[back_left_leg_prefix] = back_right_matrix;
+  shoulder_transform_map[back_right_leg_prefix] = back_left_matrix;
 
-  Link link1{1, "body_front", link1_starting_coordinate,
-             link1_ending_coordinate};
+  return shoulder_transform_map;
+}
 
-  Eigen::Vector3d link2_starting_coordinate = {front_right_matrix(0, 3),
-                                               front_right_matrix(1, 3),
-                                               front_right_matrix(2, 3)};
-  Eigen::Vector3d link2_ending_coordinate = {back_right_matrix(0, 3),
-                                             back_right_matrix(1, 3),
-                                             back_right_matrix(2, 3)};
+std::unordered_map<std::string, Joint>
+RoboDog::getJointsForLeg(const Matrix4d &base_to_leg_matrix,
+                         const std::string &leg_prefix, const float &theta1,
+                         const float &theta2, const float &theta3) {
+  std::unordered_map<std::string, Joint> joints_map;
 
-  Link link2{2, "body_right", link2_starting_coordinate,
-             link2_ending_coordinate};
+  std::string joint_name = leg_prefix + shoulder_str;
+  int id = joint_str_to_id_mapping.at(joint_name);
+  Joint shoulder_joint{id,
+                       joint_name,
+                       getCoordinateFromTransformMatrix(base_to_leg_matrix),
+                       JointType::ROTATING,
+                       theta1,
+                       -2 * M_PI,
+                       2 * M_PI};
+  joints_map[joint_name] = shoulder_joint;
 
-  Eigen::Vector3d link3_starting_coordinate = {back_right_matrix(0, 3),
-                                               back_right_matrix(1, 3),
-                                               back_right_matrix(2, 3)};
-  Eigen::Vector3d link3_ending_coordinate = {
-      back_left_matrix(0, 3), back_left_matrix(1, 3), back_left_matrix(2, 3)};
+  // here t01 indicates matrix to transform from 0 to 1 joint
+  Matrix4d t01{{cos(theta1), -sin(theta1), 0, -l1 * cos(theta1)},
+               {sin(theta1), cos(theta1), 0, -l1 * sin(theta1)},
+               {1, 0, 0, 0},
+               {0, 0, 0, 1}};
+  Matrix4d intermediate_matrix = base_to_leg_matrix * t01;
 
-  Link link3{3, "body_back", link3_starting_coordinate,
-             link3_ending_coordinate};
+  joint_name = leg_prefix + elbow_str;
+  id = joint_str_to_id_mapping.at(joint_name);
+  Joint elbow_joint{id,
+                    joint_name,
+                    getCoordinateFromTransformMatrix(intermediate_matrix),
+                    JointType::ROTATING,
+                    theta2,
+                    -2 * M_PI,
+                    2 * M_PI};
 
-  Eigen::Vector3d link4_starting_coordinate = {
-      back_left_matrix(0, 3), back_left_matrix(1, 3), back_left_matrix(2, 3)};
-  Eigen::Vector3d link4_ending_coordinate = {front_left_matrix(0, 3),
-                                             front_left_matrix(1, 3),
-                                             front_left_matrix(2, 3)};
+  joints_map[joint_name] = elbow_joint;
 
-  Link link4{4, "body_left", link4_starting_coordinate,
-             link4_ending_coordinate};
+  Matrix4d t12{{0, 0, -1, 0}, {-1, 0, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
 
-  links.push_back(link1);
-  links.push_back(link2);
-  links.push_back(link3);
-  links.push_back(link4);
+  intermediate_matrix = intermediate_matrix * t12;
 
-  Joint joint1{1,
-               "front_left_shoulder",
-               link1_starting_coordinate,
-               JointType::ROTATING,
-               -2 * M_PI,
-               2 * M_PI};
-  Joint joint2{2,
-               "front_right_shoulder",
-               link2_starting_coordinate,
-               JointType::ROTATING,
-               -2 * M_PI,
-               2 * M_PI};
-  Joint joint3{3,
-               "back_right_shoulder",
-               link3_starting_coordinate,
-               JointType::ROTATING,
-               -2 * M_PI,
-               2 * M_PI};
-  Joint joint4{4,
-               "back_left_shoulder",
-               link4_starting_coordinate,
-               JointType::ROTATING,
-               -2 * M_PI,
-               2 * M_PI};
-  joints.push_back(joint1);
-  joints.push_back(joint2);
-  joints.push_back(joint3);
-  joints.push_back(joint4);
+  Matrix4d t23{{cos(theta2), -sin(theta2), 0, l2 * cos(theta2)},
+               {sin(theta2), cos(theta2), 0, l2 * sin(theta2)},
+               {0, 0, 1, 0},
+               {0, 0, 0, 1}};
+  intermediate_matrix = intermediate_matrix * t23;
 
-  // orer here should be same as initial joints order so that we can index and
-  // find starting location easily, by looking at index 0 in the joints array
-  // for index 0 in the leg_matrix_vect
-  std::vector<std::string> joint_link_names = {"legfl_", "legfr_", "legbr_",
-                                               "legbl_"};
-  std::vector<Matrix4d> leg_matrix_vect = {front_left_matrix,
-                                           front_right_matrix,
-                                           back_right_matrix, back_left_matrix};
-  int theta1, theta2, theta3;
-  theta1 = theta2 = theta3 = 0;
-  theta2 = -M_PI / 8;
-  theta3 = -M_PI / 4;
-  int joint_counter, link_counter;
-  joint_counter = link_counter = 5;
-  for (int i = 0; i < leg_matrix_vect.size(); i++) {
-    const Matrix4d &base_to_leg_matrix = leg_matrix_vect[i];
+  joint_name = leg_prefix + wrist_str;
+  id = joint_str_to_id_mapping.at(joint_name);
+  Joint wrist_joint{id,
+                    joint_name,
+                    getCoordinateFromTransformMatrix(intermediate_matrix),
+                    JointType::ROTATING,
+                    theta3,
+                    -2 * M_PI,
+                    2 * M_PI};
+  joints_map[joint_name] = wrist_joint;
+
+  Matrix4d t34{{cos(theta3), -sin(theta3), 0, l3 * cos(theta3)},
+               {sin(theta3), cos(theta3), 0, l3 * sin(theta3)},
+               {0, 0, 1, 0},
+               {0, 0, 0, 1}};
+
+  intermediate_matrix = intermediate_matrix * t34;
+
+  joint_name = leg_prefix + end_effector_str;
+  id = joint_str_to_id_mapping.at(joint_name);
+  Joint end_effector_joint{
+      id,
+      joint_name,
+      getCoordinateFromTransformMatrix(intermediate_matrix),
+      JointType::FIXED,
+      0,
+      0,
+      0};
+  joints_map[joint_name] = end_effector_joint;
+
+  return joints_map;
+}
+
+std::vector<Joint> RoboDog::getZeroJoints(const Vector3d &body_location,
+                                          const Vector3d &body_rotation) {
+  std::vector<Joint> joints;
+
+  std::unordered_map<std::string, Matrix4d> shoulder_transform_matrices =
+      getBaseToShoulderTransforms(body_location, body_rotation);
+
+  std::vector<std::string> joint_link_names = {
+      front_left_leg_prefix, front_right_leg_prefix, back_left_leg_prefix,
+      back_right_leg_prefix};
+
+  for (int i = 0; i < joint_link_names.size(); i++) {
+
     const std::string &joint_link_name = joint_link_names[i];
-    // here t01 indicates matrix to transform from 0 to 1 joint
-    Matrix4d t01{{cos(theta1), -sin(theta1), 0, -l1 * cos(theta1)},
-                 {sin(theta1), cos(theta1), 0, -l1 * sin(theta1)},
-                 {1, 0, 0, 0},
-                 {0, 0, 0, 1}};
-    Matrix4d intermediate_matrix = base_to_leg_matrix * t01;
-    Eigen::Vector3d elbow_joint_coordinates = {intermediate_matrix(0, 3),
-                                               intermediate_matrix(1, 3),
-                                               intermediate_matrix(2, 3)};
 
-    Joint elbow_joint{joint_counter,
-                      joint_link_name + "elbow_joint",
-                      elbow_joint_coordinates,
-                      JointType::ROTATING,
-                      -2 * M_PI,
-                      2 * M_PI};
-    joint_counter++;
-    Link shoulder_to_elbow_link{link_counter,
-                                joint_link_name + "shoulder_to_elbow",
-                                joints[i].location, elbow_joint_coordinates};
-    link_counter++;
-    joints.push_back(elbow_joint);
-    links.push_back(shoulder_to_elbow_link);
+    const Matrix4d &base_matrix = shoulder_transform_matrices[joint_link_name];
 
-    Matrix4d t12{{0, 0, -1, 0}, {-1, 0, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
+    int theta1, theta2, theta3;
+    theta1 = theta2 = theta3 = 0;
 
-    intermediate_matrix = intermediate_matrix * t12;
+    std::unordered_map<std::string, Joint> leg_joints =
+        getJointsForLeg(base_matrix, joint_link_name, theta1, theta2, theta3);
 
-    Matrix4d t23{{cos(theta2), -sin(theta2), 0, l2 * cos(theta2)},
-                 {sin(theta2), cos(theta2), 0, l2 * sin(theta2)},
-                 {0, 0, 1, 0},
-                 {0, 0, 0, 1}};
-    intermediate_matrix = intermediate_matrix * t23;
+    joints.push_back(leg_joints[joint_link_name + shoulder_str]);
+    joints.push_back(leg_joints[joint_link_name + elbow_str]);
+    joints.push_back(leg_joints[joint_link_name + wrist_str]);
+    joints.push_back(leg_joints[joint_link_name + end_effector_str]);
+  }
+  return joints;
+}
 
-    Eigen::Vector3d wrist_joint_coordinates = {intermediate_matrix(0, 3),
-                                               intermediate_matrix(1, 3),
-                                               intermediate_matrix(2, 3)};
+std::vector<Link> RoboDog::getLinksFromJoints(
+    const std::unordered_map<std::string, Matrix4d>
+        &shoulder_transform_matrices,
+    const std::unordered_map<std::string, Joint> &joints,
+    const std::unordered_map<std::string, Joint> &end_effectors) {
+  std::vector<Link> links;
+  int link_id_counter = 1;
+  // make body links first
+  std::vector<std::string> joint_link_names = {
+      front_left_leg_prefix, front_right_leg_prefix, back_left_leg_prefix,
+      back_right_leg_prefix};
+  for (int i = 0; i < joint_link_names.size(); i++) {
+    const std::string &starting_joint_name = joint_link_names[i];
+    const Matrix4d &starting_transform_matrix =
+        shoulder_transform_matrices.at(starting_joint_name);
 
-    Joint wrist_joint{joint_counter,
-                      joint_link_name + "wrist_joint",
-                      wrist_joint_coordinates,
-                      JointType::ROTATING,
-                      -2 * M_PI,
-                      2 * M_PI};
-    joint_counter++;
-    Link elbow_to_wrist_joint_link{
-        link_counter, joint_link_name + "elbow_to_wrist", elbow_joint.location,
-        wrist_joint_coordinates};
-    link_counter++;
-    joints.push_back(wrist_joint);
-    links.push_back(elbow_to_wrist_joint_link);
-    Matrix4d t34{{cos(theta3), -sin(theta3), 0, l3 * cos(theta3)},
-                 {sin(theta3), cos(theta3), 0, l3 * sin(theta3)},
-                 {0, 0, 1, 0},
-                 {0, 0, 0, 1}};
+    const std::string &ending_joint_name = joint_link_names[(i + 1) % 4];
+    const Matrix4d &ending_transform_matrix =
+        shoulder_transform_matrices.at(ending_joint_name);
 
-    intermediate_matrix = intermediate_matrix * t34;
+    Eigen::Vector3d link_starting_coordinates = {
+        starting_transform_matrix(0, 3), starting_transform_matrix(1, 3),
+        starting_transform_matrix(2, 3)};
+    Eigen::Vector3d link_ending_coordinates = {ending_transform_matrix(0, 3),
+                                               ending_transform_matrix(1, 3),
+                                               ending_transform_matrix(2, 3)};
 
-    Eigen::Vector3d end_effector_coordinates = {intermediate_matrix(0, 3),
-                                                intermediate_matrix(1, 3),
-                                                intermediate_matrix(2, 3)};
-
-    Joint end_effector_joint{joint_counter,
-                             joint_link_name + "end_effector",
-                             end_effector_coordinates,
-                             JointType::FIXED,
-                             0,
-                             0};
-    joint_counter++;
-    Link wrist_to_end_effector_link{
-        link_counter, joint_link_name + "wrist_to_end_effector",
-        wrist_joint.location, end_effector_coordinates};
-    link_counter++;
-    end_effectors.push_back(end_effector_joint);
-    links.push_back(wrist_to_end_effector_link);
+    Link link{link_id_counter, body_prefix + std::to_string(link_id_counter),
+              link_starting_coordinates, link_ending_coordinates};
+    link_id_counter += 1;
+    links.push_back(link);
   }
 
-  setLinks(links);
-  setJoints(joints);
-  setEndEffectors(end_effectors);
+  for (const std::string &leg_prefix : joint_link_names) {
+
+    float theta1, theta2, theta3;
+    std::string shoulder_joint_name, elbow_joint_name, wrist_joint_name,
+        end_effector_name;
+
+    shoulder_joint_name = leg_prefix + shoulder_str;
+    elbow_joint_name = leg_prefix + elbow_str;
+    wrist_joint_name = leg_prefix + wrist_str;
+    end_effector_name = leg_prefix + end_effector_str;
+
+    Link shoulder_to_elbow_link{link_id_counter,
+                                leg_prefix + shoulder_str + "_" + elbow_str,
+                                joints.at(shoulder_joint_name).location,
+                                joints.at(elbow_joint_name).location};
+    link_id_counter++;
+    links.push_back(shoulder_to_elbow_link);
+
+    Link elbow_to_wrist_joint_link{link_id_counter,
+                                   leg_prefix + elbow_str + "_" + wrist_str,
+                                   joints.at(elbow_joint_name).location,
+                                   joints.at(wrist_joint_name).location};
+    link_id_counter++;
+    links.push_back(elbow_to_wrist_joint_link);
+
+    Link wrist_to_end_effector_link{
+        link_id_counter, leg_prefix + wrist_str + "_" + end_effector_str,
+        joints.at(wrist_joint_name).location,
+        end_effectors.at(end_effector_name).location};
+    link_id_counter++;
+    links.push_back(wrist_to_end_effector_link);
+  }
+  return links;
 }
 
-Vector3d RoboModel::getBodyLocation() { return body_location_; }
-Vector3d RoboModel::getBodyRotation() { return body_rotation_; }
-Matrix4d RoboModel::getBodyTransform() { return body_transform_matrix_; }
+Robomodel RoboDog::getForwardKinematics(
+    const Vector3d &body_location, const Vector3d &body_rotation,
+    const std::unordered_map<int, float> &joint_angle_mapping) {
+  std::vector<Link> links;
+  std::vector<Joint> joints_vect;
+  std::vector<Joint> end_effectors_vect;
 
-RoboDog::RoboDog(const int &id, const std::string &name,
-                 const Eigen::Vector3d &starting_rotation,
-                 const Eigen::Vector3d &starting_location)
-    : RoboModel(id, name) {
-  setBodyLocation(starting_location, false);
-  setBodyRotation(starting_rotation, false);
-  recalcJointsAndLinks();
+  // we get a struct or map of id to angle
+
+  // then we go leg by leg. we check if we were given all the IDs for one leg.
+  // if we werent given them all, default the missing angles to 0.
+  // get leg.
+
+  // when have legs, draw links
+
+  // first draw body links
+  // then draw links for each leg
+
+  std::unordered_map<std::string, Joint> joints;
+  std::unordered_map<std::string, Joint> end_effectors;
+
+  std::unordered_map<std::string, Matrix4d> shoulder_transform_matrices =
+      getBaseToShoulderTransforms(body_location, body_rotation);
+
+  std::vector<std::string> joint_link_names = {
+      front_left_leg_prefix, front_right_leg_prefix, back_left_leg_prefix,
+      back_right_leg_prefix};
+
+  for (const std::string &leg_prefix : joint_link_names) {
+
+    float theta1, theta2, theta3;
+    std::string shoulder_joint_name, elbow_joint_name, wrist_joint_name;
+    int shoulder_id, elbow_id, wrist_id;
+    shoulder_joint_name = leg_prefix + shoulder_str;
+    shoulder_id = joint_str_to_id_mapping.at(shoulder_joint_name);
+    if (joint_angle_mapping.find(shoulder_id) != joint_angle_mapping.end()) {
+      theta1 = joint_angle_mapping.at(shoulder_id);
+    } else {
+      theta1 = 0.0;
+    }
+
+    elbow_joint_name = leg_prefix + elbow_str;
+    elbow_id = joint_str_to_id_mapping.at(elbow_joint_name);
+    if (joint_angle_mapping.find(elbow_id) != joint_angle_mapping.end()) {
+      theta2 = joint_angle_mapping.at(elbow_id);
+    } else {
+      theta2 = 0.0;
+    }
+
+    wrist_joint_name = leg_prefix + wrist_str;
+    wrist_id = joint_str_to_id_mapping.at(wrist_joint_name);
+    if (joint_angle_mapping.find(wrist_id) != joint_angle_mapping.end()) {
+      theta3 = joint_angle_mapping.at(wrist_id);
+    } else {
+      theta3 = 0.0;
+    }
+
+    std::unordered_map<std::string, Joint> leg_joints =
+        getJointsForLeg(shoulder_transform_matrices[leg_prefix], leg_prefix,
+                        theta1, theta2, theta3);
+
+    joints[shoulder_joint_name] = leg_joints[shoulder_joint_name];
+    joints[elbow_joint_name] = leg_joints[elbow_joint_name];
+    joints[wrist_joint_name] = leg_joints[wrist_joint_name];
+
+    end_effectors[leg_prefix + end_effector_str] =
+        leg_joints[leg_prefix + end_effector_str];
+  }
+
+  links =
+      getLinksFromJoints(shoulder_transform_matrices, joints, end_effectors);
+
+  for (auto &it : joints) {
+    joints_vect.push_back(it.second);
+  }
+
+  for (auto &it : end_effectors) {
+    end_effectors_vect.push_back(it.second);
+  }
+
+  Robomodel robomodel{id, name, links, joints_vect, end_effectors_vect};
+
+  return robomodel;
 }
-// setLinks(links);

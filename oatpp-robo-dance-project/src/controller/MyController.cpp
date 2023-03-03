@@ -1,7 +1,7 @@
 #include "MyController.hpp"
 
 oatpp::data::mapping::type::DTOWrapper<RoboModelDTO>
-getRoboModelDTOSharedPtrFromModel(std::shared_ptr<RoboModel> model) {
+getRoboModelDTOSharedPtrFromModel(const Robomodel &robomodel) {
 
   auto robo_model = RoboModelDTO::createShared();
 
@@ -9,7 +9,7 @@ getRoboModelDTOSharedPtrFromModel(std::shared_ptr<RoboModel> model) {
   robo_model->links = {};
   robo_model->end_effectors = {};
 
-  for (const Joint &joint : model->getJoints()) {
+  for (const Joint &joint : robomodel.joints) {
     auto dto_joint = JointDTO::createShared();
 
     auto joint_location = CoordinateDTO::createShared();
@@ -21,12 +21,13 @@ getRoboModelDTOSharedPtrFromModel(std::shared_ptr<RoboModel> model) {
     dto_joint->name = joint.name;
     dto_joint->number = joint.number;
     dto_joint->joint_type = joint.joint_type;
-    dto_joint->min = joint.min;
-    dto_joint->max = joint.max;
+    dto_joint->current_angle_radians = joint.current_angle_radians;
+    dto_joint->min_angle_radians = joint.min_angle_radians;
+    dto_joint->max_angle_radians = joint.max_angle_radians;
     robo_model->joints->push_back(dto_joint);
   }
 
-  for (const Link &link : model->getLinks()) {
+  for (const Link &link : robomodel.links) {
     auto dto_link = LinkDTO::createShared();
     auto dto_coordinate_start = CoordinateDTO::createShared();
     auto dto_coordinate_end = CoordinateDTO::createShared();
@@ -46,7 +47,7 @@ getRoboModelDTOSharedPtrFromModel(std::shared_ptr<RoboModel> model) {
     robo_model->links->push_back(dto_link);
   }
 
-  for (const Joint &joint : model->getEndEffectors()) {
+  for (const Joint &joint : robomodel.end_effectors) {
     auto dto_joint = JointDTO::createShared();
 
     auto joint_location = CoordinateDTO::createShared();
@@ -59,24 +60,13 @@ getRoboModelDTOSharedPtrFromModel(std::shared_ptr<RoboModel> model) {
     dto_joint->name = joint.name;
     dto_joint->number = joint.number;
     dto_joint->joint_type = joint.joint_type;
-    dto_joint->min = joint.min;
-    dto_joint->max = joint.max;
+    dto_joint->current_angle_radians = joint.current_angle_radians;
+    dto_joint->min_angle_radians = joint.min_angle_radians;
+    dto_joint->max_angle_radians = joint.max_angle_radians;
     robo_model->end_effectors->push_back(dto_joint);
   }
 
-  robo_model->id = model->getId();
-  robo_model->name = model->getName();
+  robo_model->id = robomodel.id;
+  robo_model->name = robomodel.name;
   return robo_model;
-}
-
-oatpp::data::mapping::type::DTOWrapper<RoboModelDescriptionDTO>
-getRoboModelDescDTOSharedPtrFromModel(std::shared_ptr<RoboModel> model) {
-
-  auto robo_model_desc = RoboModelDescriptionDTO::createShared();
-
-  robo_model_desc->id = model->getId();
-  robo_model_desc->name = model->getName();
-  robo_model_desc->num_joints = model->getJoints().size();
-  robo_model_desc->num_links = model->getLinks().size();
-  return robo_model_desc;
 }

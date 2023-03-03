@@ -3,6 +3,7 @@ export interface RobomodelDesc {
   name: string;
   num_links: number;
   num_joints: number;
+  num_end_effectors: number;
 }
 
 export interface RobomodelDescList {

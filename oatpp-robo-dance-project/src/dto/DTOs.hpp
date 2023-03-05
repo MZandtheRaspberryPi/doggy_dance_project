@@ -73,6 +73,28 @@ class RoboModelListDTO : public oatpp::DTO {
   DTO_FIELD(List<Object<RoboModelDTO>>, robo_models);
 };
 
+class JointIdDTO : public oatpp::DTO {
+  DTO_INIT(JointIdDTO, DTO);
+  DTO_FIELD(Int32, id);
+  DTO_FIELD(Float32, current_angle_radians);
+};
+
+class ForwardKinematicsDTO : public oatpp::DTO {
+  DTO_INIT(ForwardKinematicsDTO, DTO);
+  DTO_FIELD(Float32, body_x);
+  DTO_FIELD(Float32, body_y);
+  DTO_FIELD(Float32, body_z);
+  DTO_FIELD(Float32, body_pitch);
+  DTO_FIELD(Float32, body_yaw);
+  DTO_FIELD(Float32, body_roll);
+  DTO_FIELD(Vector<Object<JointIdDTO>>, joints);
+};
+
+class ForwardKinematicsListDTO : public oatpp::DTO {
+  DTO_INIT(ForwardKinematicsListDTO, DTO);
+  DTO_FIELD(Vector<Object<ForwardKinematicsDTO>>, forward_kinematics);
+};
+
 #include OATPP_CODEGEN_END(DTO)
 
 #endif /* DTOs_hpp */

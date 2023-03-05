@@ -1,7 +1,8 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-
+import { Subscription } from 'rxjs';
 import { Joint } from '../joint';
 import { Link } from '../link';
+import { ForwardKinematics } from '../forward_kinematics_interfaces';
 import { RobomodelService } from '../robomodel.service';
 import { Robomodel } from '../robomodel';
 
@@ -111,6 +112,8 @@ export class RoboviewerComponent implements OnInit {
   configSetup: Object;
   graphData: Object[];
 
+  robomodelSubscription: Subscription;
+
   constructor(private robomodelService: RobomodelService) {
     this.jointXs = Array();
     this.jointYs = Array();
@@ -120,6 +123,8 @@ export class RoboviewerComponent implements OnInit {
     this.endEffectorZs = Array();
     this.robomodel = { id: -1, name: "", links: [], joints: [], end_effectors: [] };
     this.Graph = { nativeElement: {} };
+
+    this.robomodelSubscription = new Subscription();
 
     this.jointData = {
       type: 'scatter3d',
@@ -194,6 +199,7 @@ export class RoboviewerComponent implements OnInit {
   }
 
   ngOnInit(): void {
+
   }
 
   ngAfterViewInit() {
@@ -204,11 +210,18 @@ export class RoboviewerComponent implements OnInit {
       this.configSetup
     );
 
-    this.getRobomodels();
+
+    this.getRobomodel();
+
+    this.robomodelSubscription = this.robomodelService.subject.subscribe(
+      {
+        next: robomodel => { this.robomodel = robomodel; this.updateGraphOnRobotLoad(); },
+        error: err => console.error('An error occurred', err)
+      });
+
   }
 
   updateGraphOnRobotLoad(): void {
-
     let parsedJointsData: XYZData = getXYZFromJoints(this.robomodel.joints);
     let parsedEndEffectorData: XYZData = getXYZFromJoints(this.robomodel.end_effectors);
 
@@ -231,12 +244,18 @@ export class RoboviewerComponent implements OnInit {
 
   }
 
-  getRobomodels(): void {
-    this.robomodelService.getRobomodel(0).subscribe(
-      {
-        next: robomodel => this.robomodel = robomodel,
-        error: err => console.error('An error occurred', err),
-        complete: () => this.updateGraphOnRobotLoad()
-      });
+  getRobomodel(): void {
+
+    let kinematics: ForwardKinematics = {
+      body_x_meters: 0,
+      body_y_meters: 0,
+      body_z_meters: 0,
+      body_roll_rad: 0,
+      body_pitch_rad: 0,
+      body_yaw_rad: 0,
+      joints: []
+    };
+
+    this.robomodelService.getForwardKinematics(0, kinematics);
   }
 }

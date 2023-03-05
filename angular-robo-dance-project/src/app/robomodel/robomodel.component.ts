@@ -18,7 +18,7 @@ export class RobomodelComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.getRobomodels();
+    this.getRobomodelDescriptions();
   }
 
   onSelect(robomodel: RobomodelDesc): void {
@@ -31,8 +31,8 @@ export class RobomodelComponent implements OnInit {
   }
 
 
-  getRobomodels(): void {
-    this.robomodelService.getRobomodels().subscribe(robomodel_descs => this.robomodel_descs = robomodel_descs);
+  getRobomodelDescriptions(): void {
+    this.robomodelService.getRobomodelDescriptions().subscribe(robomodel_descs => this.robomodel_descs = robomodel_descs);
   }
 
 }

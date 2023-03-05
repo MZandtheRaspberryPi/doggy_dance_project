@@ -33,7 +33,7 @@ public:
 
 public:
   ADD_CORS(getRoboModels)
-  ENDPOINT("GET", "/robomodels", getRoboModels) {
+  ENDPOINT("GET", "/v1/descriptions", getRoboModels) {
 
     auto robo_model_desc_list_dto = RoboModelDescriptionListDTO::createShared();
 
@@ -52,19 +52,40 @@ public:
   }
 
   ADD_CORS(getRoboModelById)
-  ENDPOINT("GET", "/robomodels/{roboModelId}", getRoboModelById,
-           PATH(Int64, roboModelId, "roboModelId")) {
+  ENDPOINT("GET", "/v1/forward_kinematics/", getRoboModelById,
+           QUERY(Int32, robo_model_id, "robo_model_id", 0),
+           QUERY(Float32, body_x_meters, "body_x_meters", 0.0),
+           QUERY(Float32, body_y_meters, "body_y_meters", 0.0),
+           QUERY(Float32, body_z_meters, "body_z_meters", 0.0),
+           QUERY(Float32, body_pitch_rad, "body_pitch_rad", 0.0),
+           QUERY(Float32, body_yaw_rad, "body_yaw_rad", 0.0),
+           QUERY(Float32, body_roll_rad, "body_roll_rad", 0.0),
+           QUERIES(QueryParams, queryParams)) {
+    std::unordered_map<int, float> joint_angle_mapping;
+
+    auto robo_model_list = RoboModelListDTO::createShared();
+    robo_model_list->robo_models = {};
 
     auto robo_model = RoboModelDTO::createShared();
 
     Robomodel robomodel_result;
-    Vector3d body_location{0, 0, 0};
-    Vector3d body_rotation{0, 0, 0};
-    std::unordered_map<int, float> joint_angle_mapping;
+    Vector3d body_location{body_x_meters, body_y_meters, body_z_meters};
+    Vector3d body_rotation{body_roll_rad, body_pitch_rad, body_yaw_rad};
+    std::cout << body_x_meters << std::endl;
 
     bool model_found = false;
-    switch (roboModelId) {
+    switch (robo_model_id) {
     case 0:
+      for (int i = 1; i <= RoboDog::num_joints; i++) {
+        const oatpp::data::share::StringKeyLabel label(std::to_string(i));
+
+        if (queryParams.get(label) != nullptr) {
+          std::string joint_val_str = queryParams.get(label);
+          float joint_val_flt = std::stof(joint_val_str);
+          joint_angle_mapping[i] = joint_val_flt;
+        }
+      }
+
       robomodel_result = RoboDog::getForwardKinematics(
           body_location, body_rotation, joint_angle_mapping);
       robo_model = getRoboModelDTOSharedPtrFromModel(robomodel_result);
@@ -78,7 +99,10 @@ public:
 
       return createDtoResponse(Status::CODE_200, robo_model);
     } else {
-      return createDtoResponse(Status::CODE_500, robo_model);
+      return createResponse(
+          Status::CODE_400,
+          "given model id of '" + std::to_string(robo_model_id.getValue(0)) +
+              "' not in supported models. Supported models are: 0.");
     }
   }
 };

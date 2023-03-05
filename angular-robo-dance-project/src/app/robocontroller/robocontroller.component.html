@@ -1,0 +1,11 @@
+<mat-tab-group dynamicHeight="true">
+    <mat-tab label="Forward Kinematics">
+        <li *ngFor="let slider of sliders">
+            {{slider.name}}
+            <mat-slider min="{{slider.min}}" max="{{slider.max}}" step="{{slider.step}}" value="{{slider.cur}}"
+                (change)="sliderInput($event, slider)">
+                <input matSliderThumb>
+            </mat-slider>
+        </li>
+    </mat-tab>
+</mat-tab-group>

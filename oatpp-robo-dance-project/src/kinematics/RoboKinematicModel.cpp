@@ -85,27 +85,27 @@ const std::unordered_map<std::string, int> RoboDog::joint_str_to_id_mapping = {
     {RoboDog::front_left_leg_prefix + RoboDog::shoulder_str, 1},
     {RoboDog::front_left_leg_prefix + RoboDog::elbow_str, 2},
     {RoboDog::front_left_leg_prefix + RoboDog::wrist_str, 3},
-    {RoboDog::front_left_leg_prefix + RoboDog::end_effector_str, 4},
-    {RoboDog::front_right_leg_prefix + RoboDog::shoulder_str, 5},
-    {RoboDog::front_right_leg_prefix + RoboDog::elbow_str, 6},
-    {RoboDog::front_right_leg_prefix + RoboDog::wrist_str, 7},
-    {RoboDog::front_right_leg_prefix + RoboDog::end_effector_str, 8},
-    {RoboDog::back_left_leg_prefix + RoboDog::shoulder_str, 9},
-    {RoboDog::back_left_leg_prefix + RoboDog::elbow_str, 10},
-    {RoboDog::back_left_leg_prefix + RoboDog::wrist_str, 11},
-    {RoboDog::back_left_leg_prefix + RoboDog::end_effector_str, 12},
-    {RoboDog::back_right_leg_prefix + RoboDog::shoulder_str, 13},
-    {RoboDog::back_right_leg_prefix + RoboDog::elbow_str, 14},
-    {RoboDog::back_right_leg_prefix + RoboDog::wrist_str, 15},
-    {RoboDog::back_right_leg_prefix + RoboDog::end_effector_str, 16},
+    {RoboDog::front_right_leg_prefix + RoboDog::shoulder_str, 4},
+    {RoboDog::front_right_leg_prefix + RoboDog::elbow_str, 5},
+    {RoboDog::front_right_leg_prefix + RoboDog::wrist_str, 6},
+    {RoboDog::back_left_leg_prefix + RoboDog::shoulder_str, 7},
+    {RoboDog::back_left_leg_prefix + RoboDog::elbow_str, 8},
+    {RoboDog::back_left_leg_prefix + RoboDog::wrist_str, 9},
+    {RoboDog::back_right_leg_prefix + RoboDog::shoulder_str, 10},
+    {RoboDog::back_right_leg_prefix + RoboDog::elbow_str, 11},
+    {RoboDog::back_right_leg_prefix + RoboDog::wrist_str, 12},
+    {RoboDog::front_left_leg_prefix + RoboDog::end_effector_str, 1},
+    {RoboDog::front_right_leg_prefix + RoboDog::end_effector_str, 2},
+    {RoboDog::back_left_leg_prefix + RoboDog::end_effector_str, 3},
+    {RoboDog::back_right_leg_prefix + RoboDog::end_effector_str, 4},
 };
 
 std::unordered_map<std::string, Matrix4d>
 RoboDog::getBaseToShoulderTransforms(const Vector3d &body_location,
                                      const Vector3d &body_rotation) {
   Matrix4d transform_matrix = getTransformMatrix4d(
-      body_location[0], body_location[1], body_location[2], body_rotation[0],
-      body_rotation[1], body_rotation[2]);
+      body_rotation[0], body_rotation[1], body_rotation[2], body_location[0],
+      body_location[1], body_location[2]);
 
   Matrix4d front_left_matrix =
       transform_matrix *

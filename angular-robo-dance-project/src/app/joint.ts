@@ -7,7 +7,7 @@ enum JointType {
 }
 
 export interface Joint {
-  id: number;
+  number: number;
   name: string;
   axis: string;
   location: Coordinate;
@@ -15,4 +15,9 @@ export interface Joint {
   current_angle_radians: number;
   min_angle_radians: number;
   max_angle_radians: number;
+}
+
+export interface JointId {
+  number: number;
+  current_angle_radians: number;
 }

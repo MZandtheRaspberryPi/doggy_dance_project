@@ -1,4 +1,7 @@
 /* Application-wide Styles */
+
+@import "../node_modules/@angular/material/prebuilt-themes/deeppurple-amber.css";
+
 h1 {
     color: #FFFFFF;
     font-weight: bold;

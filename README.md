@@ -7,8 +7,8 @@
 go to the root folder of the repo  
 
 ```
-docker build -t mzandtheraspberrypi/doggy-dance-web-app:20221223 -f web_app.Dockerfile ./angular-robo-dance-project
-docker run -it -p --rm 80:80 mzandtheraspberrypi/doggy-dance-web-app:20221223 or docker-compose up -d
+docker build -t mzandtheraspberrypi/doggy-dance-web-app:2023-03-05 -f web_app.Dockerfile ./angular-robo-dance-project
+docker run -it -p --rm 80:80 mzandtheraspberrypi/doggy-dance-web-app:2023-03-05 or docker-compose up -d
 ```  
 
 and to push it:  
@@ -28,7 +28,7 @@ docker run -itd -p 80:80 --restart=always mzandtheraspberrypi/angular-app:latest
 From root of repo:
 
 ```
-docker build -t mzandtheraspberrypi/doggy-dance-rest-api-app:2022-12-23 -f rest_api.Dockerfile ./oatpp-robo-dance-project
+docker build -t mzandtheraspberrypi/doggy-dance-rest-api-app:2023-03-05 -f rest_api.Dockerfile ./oatpp-robo-dance-project
 ```
 
 ```

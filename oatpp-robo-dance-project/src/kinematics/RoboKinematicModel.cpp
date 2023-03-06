@@ -162,8 +162,8 @@ RoboDog::getJointsForLeg(const Matrix4d &base_to_leg_matrix,
   joints_map[joint_name] = shoulder_joint;
 
   // here t01 indicates matrix to transform from 0 to 1 joint
-  // seems there are some bugs in this matrix from the paper
-  // hence switching it to accomodate z rotation
+  // seems some matrix mult in the paper went wrong so
+  // we are using our own here
   Matrix4d t01{{cos(theta1), -sin(theta1), 0, -l1 * cos(theta1)},
                {sin(theta1), cos(theta1), 0, -l1 * sin(theta1)},
                {0, 0, 1, 0},
@@ -182,7 +182,8 @@ RoboDog::getJointsForLeg(const Matrix4d &base_to_leg_matrix,
 
   joints_map[joint_name] = elbow_joint;
   // seems there are some bugs in this matrix from the paper
-  // hence switching it to accomodate z rotation
+  // where some matrix mult went wonky
+  // so we are using our own here
   Matrix4d t12{{0, 0, 1, 0}, {-1, 0, 0, 0}, {0, -1, 0, 0}, {0, 0, 0, 1}};
 
   intermediate_matrix = intermediate_matrix * t12;

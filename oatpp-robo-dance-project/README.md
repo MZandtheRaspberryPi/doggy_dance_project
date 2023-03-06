@@ -66,6 +66,8 @@ x
      /   |
 ```
 
+![body_to_legs](demo_assets/body_to_legs.png)
+
 ## Forward Kinematics using Denavit-Hartenberg Parameters
 
 Two variables for rotation are theta and alpha.  
@@ -86,7 +88,13 @@ We lay out the robot system, and we do this following rules. Namely:
 Joint positioning as per Muhammed Arif Sen, Veli Bakircioglu, Mete Kalyoncu in https://www.ijstr.org/final-print/sep2017/Inverse-Kinematic-Analysis-Of-A-Quadruped-Robot.pdf.  
 ![coordinate_system_pic](./demo_assets/forward_kinematics_joints.png)
 
+The matrix t01 and t12 in the paper is incorrect. Looks like some matrix multiplication went wrong. Heres an image focusing on these two transforms:  
+![t01_t12](./demo_assets/legs_t01_t12.png)
+
+
 For t12, some discrepancies. paper lists theta as -pi/2 and alpha as -pi/2 and d and r as 0. getting matrix as below doesnt match the paper.  
+
+Full DH parameters from paper:  
 | joint i  | theta i (degree)  | alpha i (degree)  |  r i (meters) |  d i (meters) |
 |---|---|---|---|---|
 |  0-1 | theta1   |  0 |  l1 | 0  |
@@ -99,6 +107,7 @@ Then, as per wikipedia we can make the matrices so:
 
 cos is x on unit circle, sin is y.
 
+t12
 |||||
 |---|---|---|---|
 | cos(-pi/2) | -sin(-pi/2)*cos(-pi/2) | sin(-pi/2) * sin(-pi/2) | 0 * cos(-pi/2) |
@@ -110,8 +119,8 @@ cos is x on unit circle, sin is y.
 so that is:
 |||||
 |---|---|---|---|
-| 0 | -(-1 * 0) | -1 * (-1) | 0 * (-0) |
-| -1 | 0 * 0 | 0 * (-1) | 0 * (-1) |
+| 0 | -(-1 * 0) | -1 * (-1) | 0 * (0) |
+| -1 | 0 * 0 | 0 * (-1) |0 * (-1) |
 |0 | -1 | 0 | 0 |
 |0|0|0|1|
 
@@ -124,42 +133,14 @@ so that is:
 |0 | -1 | 0 | 0 |
 |0|0|0|1|
 
-To do t23: theta is theta2, alpha is 0, a is l2, and d is 0.
+This is slightly different from the matrix given in the paper in the third row of the matrix.  
 
-
-|||||
-|---|---|---|---|
-| cos(theta2) | -sin(theta2)*cos(0) | sin(theta2) * sin(0) | l2 * cos(theta2) |
-|sin(theta2) | cos(theta2) * cos(0) | -cos(theta2) * sin(0) | l2 * sin(theta2) |
-|0 | sin(0) | cos(0) | 0 |
-|0|0|0|1|
-
-
-so that is:
-|||||
-|---|---|---|---|
-| cos(theta2) | -sin(theta2)* 1 | sin(theta2) * 0 | l2 * cos(theta2)|
-| sin(theta2) | cos(theta2) * 1 | -cos(theta2) * 0| l2 * sin(theta2) |
-|0 | 0 | 1 | 0 |
-|0|0|0|1|
-
-
-so that is:
-|||||
-|---|---|---|---|
-| cos(theta2) | -sin(theta2) | 0 | l2 * cos(theta2) |
-| sin(theta2) | cos(theta2)| 0 | l2 * sin(theta2) |
-|0 | 0 | 1 | 0 |
-|0|0|0|1|
-
-
-If we write each matrix out, we can do multiplication to go from 0 to 4, the end effector.  
 
 Looking at t01:  
 |||||
 |---|---|---|---|
-| cos(theta1) | -sin(theta1)*cos(0) | sin(theta1) * sin(0) | l1 * cos(theta1) |
-|sin(theta1) | cos(theta1) * cos(0) | -cos(theta1) * sin(0) | l1 * sin(theta1) |
+| cos(theta1) | -sin(theta1)*cos(0) | sin(theta1) * sin(0) | -l1 * cos(theta1) |
+|sin(theta1) | cos(theta1) * cos(0) | -cos(theta1) * sin(0) | -l1 * sin(theta1) |
 |0 | sin(0) | cos(0) | 0 |
 |0|0|0|1|
 
@@ -167,8 +148,8 @@ Looking at t01:
 so that is:
 |||||
 |---|---|---|---|
-| cos(theta1) | -sin(theta1)* 1 | sin(theta1) * 0 | l1 * cos(theta1)|
-| sin(theta1) | cos(theta1) * 1 | -cos(theta1) * 0| l1 * sin(theta1) |
+| cos(theta1) | -sin(theta1)* 1 | sin(theta1) * 0 | -l1 * cos(theta1)|
+| sin(theta1) | cos(theta1) * 1 | -cos(theta1) * 0| -l1 * sin(theta1) |
 |0 | 0 | 1 | 0 |
 |0|0|0|1|
 
@@ -176,11 +157,12 @@ so that is:
 so that is:
 |||||
 |---|---|---|---|
-| cos(theta1) | -sin(theta1) | 0 | l1 * cos(theta1) |
-| sin(theta1) | cos(theta1)| 0 | l1 * sin(theta1) |
+| cos(theta1) | -sin(theta1) | 0 | -l1 * cos(theta1) |
+| sin(theta1) | cos(theta1)| 0 | -l1 * sin(theta1) |
 |0 | 0 | 1 | 0 |
 |0|0|0|1|
 
+This is slightly different than the matrix in the paper.  
 
 ### API Spec
 We will take `http://localhost:8000/robomodels` as the base. This will return a description of the models available. For example:  

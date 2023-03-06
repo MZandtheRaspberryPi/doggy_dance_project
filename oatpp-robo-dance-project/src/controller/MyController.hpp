@@ -71,7 +71,6 @@ public:
     Robomodel robomodel_result;
     Vector3d body_location{body_x_meters, body_y_meters, body_z_meters};
     Vector3d body_rotation{body_roll_rad, body_pitch_rad, body_yaw_rad};
-    std::cout << body_x_meters << std::endl;
 
     bool model_found = false;
     switch (robo_model_id) {

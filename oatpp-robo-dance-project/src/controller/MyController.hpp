@@ -51,8 +51,8 @@ public:
     return createDtoResponse(Status::CODE_200, robo_model_desc_list_dto);
   }
 
-  ADD_CORS(getRoboModelById)
-  ENDPOINT("GET", "/v1/forward_kinematics/", getRoboModelById,
+  ADD_CORS(getForwardKinematics)
+  ENDPOINT("GET", "/v1/forward_kinematics/", getForwardKinematics,
            QUERY(Int32, robo_model_id, "robo_model_id", 0),
            QUERY(Float32, body_x_meters, "body_x_meters", 0.0),
            QUERY(Float32, body_y_meters, "body_y_meters", 0.0),
@@ -87,6 +87,88 @@ public:
 
       robomodel_result = RoboDog::getForwardKinematics(
           body_location, body_rotation, joint_angle_mapping);
+      robo_model = getRoboModelDTOSharedPtrFromModel(robomodel_result);
+      model_found = true;
+      break;
+    default:
+      break;
+    }
+
+    if (model_found) {
+
+      return createDtoResponse(Status::CODE_200, robo_model);
+    } else {
+      return createResponse(
+          Status::CODE_400,
+          "given model id of '" + std::to_string(robo_model_id.getValue(0)) +
+              "' not in supported models. Supported models are: 0.");
+    }
+  }
+
+  ADD_CORS(getInverseKinematics)
+  ENDPOINT("GET", "/v1/inverse_kinematics/", getInverseKinematics,
+           QUERY(Int32, robo_model_id, "robo_model_id", 0),
+           QUERY(Float32, body_x_meters, "body_x_meters", 0.0),
+           QUERY(Float32, body_y_meters, "body_y_meters", 0.0),
+           QUERY(Float32, body_z_meters, "body_z_meters", 0.0),
+           QUERY(Float32, body_pitch_rad, "body_pitch_rad", 0.0),
+           QUERY(Float32, body_yaw_rad, "body_yaw_rad", 0.0),
+           QUERY(Float32, body_roll_rad, "body_roll_rad", 0.0),
+           QUERIES(QueryParams, queryParams)) {
+    std::unordered_map<int, Vector3d> end_effector_pos_mapping;
+
+    auto robo_model_list = RoboModelListDTO::createShared();
+    robo_model_list->robo_models = {};
+
+    auto robo_model = RoboModelDTO::createShared();
+
+    Robomodel robomodel_result;
+    Vector3d body_location{body_x_meters, body_y_meters, body_z_meters};
+    Vector3d body_rotation{body_roll_rad, body_pitch_rad, body_yaw_rad};
+
+    bool model_found = false;
+    switch (robo_model_id) {
+    case 0:
+      for (int i = 1; i <= RoboDog::num_end_effectors; i++) {
+        const oatpp::data::share::StringKeyLabel label_x(std::to_string(i) +
+                                                         "_x");
+        const oatpp::data::share::StringKeyLabel label_y(std::to_string(i) +
+                                                         "_y");
+        const oatpp::data::share::StringKeyLabel label_z(std::to_string(i) +
+                                                         "_z");
+
+        float x, y, z;
+        x = y = z = 0;
+
+        bool end_effector_found = false;
+
+        if (queryParams.get(label_x) != nullptr) {
+          std::string joint_val_str = queryParams.get(label_x);
+          x = std::stof(joint_val_str);
+          end_effector_found = true;
+        }
+
+        if (queryParams.get(label_y) != nullptr) {
+          std::string joint_val_str = queryParams.get(label_y);
+          y = std::stof(joint_val_str);
+          end_effector_found = true;
+        }
+
+        if (queryParams.get(label_z) != nullptr) {
+          std::string joint_val_str = queryParams.get(label_z);
+          z = std::stof(joint_val_str);
+          end_effector_found = true;
+        }
+
+        if (end_effector_found) {
+
+          Vector3d end_effector_loc{x, y, z};
+          end_effector_pos_mapping[i] = end_effector_loc;
+        }
+      }
+
+      robomodel_result = RoboDog::getInverseKinematics(
+          body_location, body_rotation, end_effector_pos_mapping);
       robo_model = getRoboModelDTOSharedPtrFromModel(robomodel_result);
       model_found = true;
       break;

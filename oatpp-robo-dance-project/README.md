@@ -70,16 +70,17 @@ x
 
 ## Forward Kinematics using Denavit-Hartenberg Parameters
 
-Two variables for rotation are theta and alpha.  
-Two variables for displacement are r and d.  
+Lets assume we know the location of the body (x,y,z) and the pose of the pody (rotation about x, y, z). We also know the angle of each movable joint. How do we calculate where the end effectors, the robot paws, are?
 
-Theta: angle from Xn-1 to X n around Z n -1.  
-alpha: angle from zn-1 to zn around x n.
+We use a framework for robotic joint translation called the Denavit-Hartenberg Parameters. This lets us specify the robotic system and describe each link between joints using 4 parameters, namely two for rotation, theta and alpha, and two variables for displacement, r and d. Once we have a table with these four parameters filled out for the links between joints, we can write transformation matrices using screw displacement to translate back and forth between joints to the end effectors. This is convenient as its a simple matrix multiplication operation to describe joint or end effector position.
 
-r (sometimes see a letter instead of r): distance between origin of n-1 frame and origin of n frame along xn direction.  
-d distance from Xn-1 to Xn along Z n -1 direction.  
+The parameters are:  
+* theta: angle from Xn-1 to X n around Z n -1.  
+* alpha: angle from zn-1 to zn around x n.
+* r (sometimes see a letter instead of r): distance between origin of n-1 frame and origin of n frame along xn direction
+* d distance from Xn-1 to Xn along Z n -1 direction.  
 
-We lay out the robot system, and we do this following rules. Namely:  
+We lay out the robot system following the below rules when we do so:  
 
 * z-axis is in direction of joint axis
 * x-axis is parallel to the common normal (line perpinddicular to both joints), or free if no unique common normal
@@ -88,13 +89,7 @@ We lay out the robot system, and we do this following rules. Namely:
 Joint positioning as per Muhammed Arif Sen, Veli Bakircioglu, Mete Kalyoncu in https://www.ijstr.org/final-print/sep2017/Inverse-Kinematic-Analysis-Of-A-Quadruped-Robot.pdf.  
 ![coordinate_system_pic](./demo_assets/forward_kinematics_joints.png)
 
-The matrix t01 and t12 in the paper is incorrect. Looks like some matrix multiplication went wrong. Heres an image focusing on these two transforms:  
-![t01_t12](./demo_assets/legs_t01_t12.png)
-
-
-For t12, some discrepancies. paper lists theta as -pi/2 and alpha as -pi/2 and d and r as 0. getting matrix as below doesnt match the paper.  
-
-Full DH parameters from paper:  
+Full DH parameters from above paper:  
 | joint i  | theta i (degree)  | alpha i (degree)  |  r i (meters) |  d i (meters) |
 |---|---|---|---|---|
 |  0-1 | theta1   |  0 |  l1 | 0  |
@@ -105,7 +100,12 @@ Full DH parameters from paper:
 Then, as per wikipedia we can make the matrices so:  
 ![using_dh_pic](./demo_assets/using_dh_params.png)
 
-cos is x on unit circle, sin is y.
+
+That said, the matrix t01 and t12 in the paper is incorrect. Looks like we are using some different conventions or a typo entered the game. Heres an image focusing on these two transforms:  
+![t01_t12](./demo_assets/legs_t01_t12.png)
+
+
+For t12, some discrepancies. paper lists theta as -pi/2 and alpha as -pi/2 and d and r as 0. getting matrix as below doesnt match the paper.  
 
 t12
 |||||
@@ -400,3 +400,9 @@ Also from there, `http://localhost:8000/robomodels/:id/inverse_kinematics`, whic
 
 Also from there,  `http://localhost:8000/robomodels/:id/ik_end_effectors` which takes pos and orientation of all end effectors and sends back robot and all joints and link coordinates.  
 
+
+## Inverse Kinematics using Trigonometry
+
+Inverse kinematics comes into play, when we want to specify the location of an end effector and calculate the joint positions nescessary to acheive this position. This often comes down to drawing clever triangles in 3d space and using trigonometry to solve for angles. For this quadruped, we have 3 motors per leg, and 3 actuable joints per leg. There is joint in the shoulder, the side to side joint, one joint in the elbow, and one joint in the wrist.
+
+### Calculating the Shoulder Angle

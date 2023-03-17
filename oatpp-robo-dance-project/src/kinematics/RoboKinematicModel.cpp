@@ -69,10 +69,19 @@ const int RoboDog::num_end_effectors = 4;
 const int RoboDog::id = 0;
 const std::string RoboDog::name = "robo_dog";
 
-const std::string RoboDog::front_left_leg_prefix = "legfl_";
-const std::string RoboDog::front_right_leg_prefix = "legfr_";
-const std::string RoboDog::back_left_leg_prefix = "legbr_";
-const std::string RoboDog::back_right_leg_prefix = "legbl_";
+const std::string RoboDog::front_left_leg_str = "legfl";
+const std::string RoboDog::front_right_leg_str = "legfr";
+const std::string RoboDog::back_right_leg_str = "legbr";
+const std::string RoboDog::back_left_leg_str = "legbl";
+
+const std::string RoboDog::front_left_leg_prefix =
+    RoboDog::front_left_leg_str + "_";
+const std::string RoboDog::front_right_leg_prefix =
+    RoboDog::front_right_leg_str + "_";
+const std::string RoboDog::back_right_leg_prefix =
+    RoboDog::back_right_leg_str + "_";
+const std::string RoboDog::back_left_leg_prefix =
+    RoboDog::back_left_leg_str + "_";
 
 const std::string RoboDog::body_prefix = "body_";
 
@@ -99,6 +108,12 @@ const std::unordered_map<std::string, int> RoboDog::joint_str_to_id_mapping = {
     {RoboDog::back_left_leg_prefix + RoboDog::end_effector_str, 3},
     {RoboDog::back_right_leg_prefix + RoboDog::end_effector_str, 4},
 };
+
+const std::unordered_map<std::string, int> RoboDog::leg_str_to_id_mapping = {
+    {RoboDog::front_left_leg_str, 1},
+    {RoboDog::front_right_leg_str, 2},
+    {RoboDog::back_right_leg_str, 3},
+    {RoboDog::back_left_leg_str, 4}};
 
 std::unordered_map<std::string, Matrix4d>
 RoboDog::getBaseToShoulderTransforms(const Vector3d &body_location,
@@ -409,4 +424,68 @@ Robomodel RoboDog::getForwardKinematics(
   Robomodel robomodel{id, name, links, joints_vect, end_effectors_vect};
 
   return robomodel;
+}
+
+Robomodel RoboDog::getInverseKinematics(
+    const Vector3d &body_location, const Vector3d &body_rotation,
+    const std::unordered_map<int, Vector3d> &end_effector_pos_mapping) {
+
+  int front_left_end_effector_id = leg_str_to_id_mapping.at(
+      RoboDog::front_left_leg_prefix + RoboDog::end_effector_str);
+  int front_right_end_effector_id = leg_str_to_id_mapping.at(
+      RoboDog::front_right_leg_prefix + RoboDog::end_effector_str);
+  int back_right_end_effector_id = leg_str_to_id_mapping.at(
+      RoboDog::back_right_leg_prefix + RoboDog::end_effector_str);
+  int back_left_end_effector_id = leg_str_to_id_mapping.at(
+      RoboDog::back_right_leg_prefix + RoboDog::end_effector_str);
+
+  std::vector<int> end_effector_ids = {
+      front_left_end_effector_id, front_right_end_effector_id,
+      back_right_end_effector_id, back_left_end_effector_id};
+  std::vector<std::string> leg_prefix_strs = {
+      front_left_leg_prefix, front_right_leg_prefix, back_right_leg_prefix,
+      back_left_leg_prefix};
+  std::unordered_map<int, float> joint_angle_mapping;
+
+  for (int i = 0; i < end_effector_ids.size(); i++) {
+    int id = end_effector_ids[i];
+    std::string leg_prefix_str = leg_prefix_strs[i];
+
+    Vector3d end_effector_pos = {0, 0, 0};
+    if (end_effector_pos_mapping.find(id) != end_effector_pos_mapping.end()) {
+      end_effector_pos = end_effector_pos_mapping.at(id);
+    }
+
+    double x, y, z;
+    x = end_effector_pos[0];
+    y = end_effector_pos[1];
+    z = end_effector_pos[2];
+
+    double first_part_theta1 = -atan2(-y, x);
+    double second_part_theta1 =
+        atan2(sqrt(pow(x, 2) + pow(y, 2) - pow(l1, 2)), -l1);
+
+    double theta1 = first_part_theta1 - second_part_theta1;
+
+    double D = (pow(x, 2) + pow(y, 2) - pow(l1, 2) + pow(z, 2) - pow(l2, 2) -
+                pow(l3, 2)) /
+               (2 * l2 * l3);
+
+    double theta3 = atan2(-sqrt(1 - pow(D, 2)), D);
+
+    double theta2 = atan2(z, sqrt((pow(x, 2) + pow(y, 2) - pow(l1, 2)))) -
+                    atan2(l3 * sin(theta3), l2 + (l3 * cos(theta3)));
+
+    int shoulder_joint_id =
+        joint_str_to_id_mapping.at(leg_prefix_str + shoulder_str);
+    int elbow_joint_id = joint_str_to_id_mapping.at(leg_prefix_str + elbow_str);
+    int wrist_joint_id = joint_str_to_id_mapping.at(leg_prefix_str + wrist_str);
+
+    joint_angle_mapping[shoulder_joint_id] = theta1;
+    joint_angle_mapping[elbow_joint_id] = theta2;
+    joint_angle_mapping[wrist_joint_id] = theta3;
+  }
+
+  return getForwardKinematics(body_location, body_rotation,
+                              joint_angle_mapping);
 }

@@ -57,6 +57,9 @@ public:
   static Robomodel getForwardKinematics(
       const Vector3d &body_location, const Vector3d &body_rotation,
       const std::unordered_map<int, float> &joint_angle_mapping);
+  static Robomodel getInverseKinematics(
+      const Vector3d &body_location, const Vector3d &body_rotation,
+      const std::unordered_map<int, Vector3d> &end_effector_pos_mapping);
   static std::vector<Joint> getZeroJoints(const Vector3d &body_location,
                                           const Vector3d &body_rotation);
 
@@ -74,6 +77,9 @@ public:
   static Robomodel getForwardKinematics(
       const Vector3d &body_location, const Vector3d &body_rotation,
       const std::unordered_map<int, float> &joint_angle_mapping);
+  static Robomodel getInverseKinematics(
+      const Vector3d &body_location, const Vector3d &body_rotation,
+      const std::unordered_map<int, Vector3d> &end_effector_pos_mapping);
   const static int id;
   const static std::string name;
   const static int num_joints;
@@ -107,6 +113,11 @@ private:
   const static float body_length;
   const static float body_width;
 
+  const static std::string front_left_leg_str;
+  const static std::string front_right_leg_str;
+  const static std::string back_left_leg_str;
+  const static std::string back_right_leg_str;
+
   const static std::string front_left_leg_prefix;
   const static std::string front_right_leg_prefix;
   const static std::string back_left_leg_prefix;
@@ -118,4 +129,5 @@ private:
   const static std::string wrist_str;
   const static std::string end_effector_str;
   const static std::unordered_map<std::string, int> joint_str_to_id_mapping;
+  const static std::unordered_map<std::string, int> leg_str_to_id_mapping;
 };

@@ -62,6 +62,7 @@ public:
       const std::unordered_map<int, Vector3d> &end_effector_pos_mapping);
   static std::vector<Joint> getZeroJoints(const Vector3d &body_location,
                                           const Vector3d &body_rotation);
+  const static Vector3d default_x_y_z_end_effectors;
 
 public:
   int id;
@@ -85,6 +86,7 @@ public:
   const static int num_joints;
   const static int num_links;
   const static int num_end_effectors;
+  const static Vector3d default_x_y_z_end_effectors;
 
 protected:
   static std::vector<Link> getLinksFromJoints(

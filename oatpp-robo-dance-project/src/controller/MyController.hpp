@@ -138,7 +138,9 @@ public:
                                                          "_z");
 
         float x, y, z;
-        x = y = z = 0;
+        x = RoboDog::default_x_y_z_end_effectors[0];
+        y = RoboDog::default_x_y_z_end_effectors[1];
+        x = RoboDog::default_x_y_z_end_effectors[2];
 
         bool end_effector_found = false;
 

@@ -90,6 +90,8 @@ const std::string RoboDog::elbow_str = "elbow";
 const std::string RoboDog::wrist_str = "wrist";
 const std::string RoboDog::end_effector_str = "end_effector";
 
+const Vector3d RoboDog::default_x_y_z_end_effectors{0, -0.65, 0};
+
 const std::unordered_map<std::string, int> RoboDog::joint_str_to_id_mapping = {
     {RoboDog::front_left_leg_prefix + RoboDog::shoulder_str, 1},
     {RoboDog::front_left_leg_prefix + RoboDog::elbow_str, 2},
@@ -430,14 +432,14 @@ Robomodel RoboDog::getInverseKinematics(
     const Vector3d &body_location, const Vector3d &body_rotation,
     const std::unordered_map<int, Vector3d> &end_effector_pos_mapping) {
 
-  int front_left_end_effector_id = leg_str_to_id_mapping.at(
+  int front_left_end_effector_id = joint_str_to_id_mapping.at(
       RoboDog::front_left_leg_prefix + RoboDog::end_effector_str);
-  int front_right_end_effector_id = leg_str_to_id_mapping.at(
+  int front_right_end_effector_id = joint_str_to_id_mapping.at(
       RoboDog::front_right_leg_prefix + RoboDog::end_effector_str);
-  int back_right_end_effector_id = leg_str_to_id_mapping.at(
+  int back_right_end_effector_id = joint_str_to_id_mapping.at(
       RoboDog::back_right_leg_prefix + RoboDog::end_effector_str);
-  int back_left_end_effector_id = leg_str_to_id_mapping.at(
-      RoboDog::back_right_leg_prefix + RoboDog::end_effector_str);
+  int back_left_end_effector_id = joint_str_to_id_mapping.at(
+      RoboDog::back_left_leg_prefix + RoboDog::end_effector_str);
 
   std::vector<int> end_effector_ids = {
       front_left_end_effector_id, front_right_end_effector_id,
@@ -451,7 +453,7 @@ Robomodel RoboDog::getInverseKinematics(
     int id = end_effector_ids[i];
     std::string leg_prefix_str = leg_prefix_strs[i];
 
-    Vector3d end_effector_pos = {0, 0, 0};
+    Vector3d end_effector_pos = default_x_y_z_end_effectors;
     if (end_effector_pos_mapping.find(id) != end_effector_pos_mapping.end()) {
       end_effector_pos = end_effector_pos_mapping.at(id);
     }
@@ -471,7 +473,12 @@ Robomodel RoboDog::getInverseKinematics(
                 pow(l3, 2)) /
                (2 * l2 * l3);
 
-    double theta3 = atan2(-sqrt(1 - pow(D, 2)), D);
+    double theta3;
+    if (id == back_left_end_effector_id || id == front_right_end_effector_id) {
+      theta3 = atan2(-sqrt(1 - pow(D, 2)), D);
+    } else {
+      theta3 = atan2(sqrt(1 - pow(D, 2)), D);
+    }
 
     double theta2 = atan2(z, sqrt((pow(x, 2) + pow(y, 2) - pow(l1, 2)))) -
                     atan2(l3 * sin(theta3), l2 + (l3 * cos(theta3)));

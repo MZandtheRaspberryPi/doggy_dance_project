@@ -21,3 +21,15 @@ export interface JointId {
   number: number;
   current_angle_radians: number;
 }
+
+export interface EndEffector {
+  number: number,
+  name: string,
+  location: Coordinate,
+  min_x: number,
+  min_y: number,
+  min_z: number,
+  max_x: number,
+  max_y: number,
+  max_z: number
+};

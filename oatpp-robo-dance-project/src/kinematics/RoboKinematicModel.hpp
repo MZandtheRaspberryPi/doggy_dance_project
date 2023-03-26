@@ -21,6 +21,18 @@ struct Joint {
   float max_angle_radians;
 };
 
+struct EndEffector {
+  int number;
+  std::string name;
+  Eigen::Vector3d location;
+  float min_x;
+  float min_y;
+  float min_z;
+  float max_x;
+  float max_y;
+  float max_z;
+};
+
 struct Link {
 
   int number;
@@ -34,7 +46,7 @@ struct Robomodel {
   std::string name;
   std::vector<Link> links;
   std::vector<Joint> joints;
-  std::vector<Joint> end_effectors;
+  std::vector<EndEffector> end_effectors;
 };
 
 Matrix4d getXRotationMatrix4d(double x_rotation);
@@ -93,7 +105,7 @@ protected:
       const std::unordered_map<std::string, Matrix4d>
           &shoulder_transform_matrices,
       const std::unordered_map<std::string, Joint> &joints,
-      const std::unordered_map<std::string, Joint> &end_effectors);
+      const std::unordered_map<std::string, EndEffector> &end_effectors);
 
   static std::unordered_map<std::string, Matrix4d>
   getBaseToShoulderTransforms(const Vector3d &body_location,
@@ -114,6 +126,13 @@ private:
 
   const static float body_length;
   const static float body_width;
+
+  const static float end_effector_x_min;
+  const static float end_effector_y_min;
+  const static float end_effector_z_min;
+  const static float end_effector_x_max;
+  const static float end_effector_y_max;
+  const static float end_effector_z_max;
 
   const static std::string front_left_leg_str;
   const static std::string front_right_leg_str;

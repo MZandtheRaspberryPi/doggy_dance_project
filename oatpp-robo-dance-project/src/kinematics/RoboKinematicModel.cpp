@@ -66,6 +66,13 @@ const int RoboDog::num_joints = 12;
 const int RoboDog::num_links = 16;
 const int RoboDog::num_end_effectors = 4;
 
+const float RoboDog::end_effector_x_min = -0.4;
+const float RoboDog::end_effector_y_min = -1.2;
+const float RoboDog::end_effector_z_min = -0.4;
+const float RoboDog::end_effector_x_max = 0.4;
+const float RoboDog::end_effector_y_max = -0.4;
+const float RoboDog::end_effector_z_max = 0.4;
+
 const int RoboDog::id = 0;
 const std::string RoboDog::name = "robo_dog";
 
@@ -279,7 +286,7 @@ std::vector<Link> RoboDog::getLinksFromJoints(
     const std::unordered_map<std::string, Matrix4d>
         &shoulder_transform_matrices,
     const std::unordered_map<std::string, Joint> &joints,
-    const std::unordered_map<std::string, Joint> &end_effectors) {
+    const std::unordered_map<std::string, EndEffector> &end_effectors) {
   std::vector<Link> links;
   int link_id_counter = 1;
   // make body links first
@@ -348,7 +355,7 @@ Robomodel RoboDog::getForwardKinematics(
     const std::unordered_map<int, float> &joint_angle_mapping) {
   std::vector<Link> links;
   std::vector<Joint> joints_vect;
-  std::vector<Joint> end_effectors_vect;
+  std::vector<EndEffector> end_effectors_vect;
 
   // we get a struct or map of id to angle
 
@@ -362,7 +369,7 @@ Robomodel RoboDog::getForwardKinematics(
   // then draw links for each leg
 
   std::unordered_map<std::string, Joint> joints;
-  std::unordered_map<std::string, Joint> end_effectors;
+  std::unordered_map<std::string, EndEffector> end_effectors;
 
   std::unordered_map<std::string, Matrix4d> shoulder_transform_matrices =
       getBaseToShoulderTransforms(body_location, body_rotation);
@@ -408,8 +415,16 @@ Robomodel RoboDog::getForwardKinematics(
     joints[elbow_joint_name] = leg_joints[elbow_joint_name];
     joints[wrist_joint_name] = leg_joints[wrist_joint_name];
 
-    end_effectors[leg_prefix + end_effector_str] =
-        leg_joints[leg_prefix + end_effector_str];
+    Joint end_effector_joint = leg_joints[leg_prefix + end_effector_str];
+
+    EndEffector end_effector{
+        end_effector_joint.number,   end_effector_joint.name,
+        end_effector_joint.location, RoboDog::end_effector_x_min,
+        RoboDog::end_effector_y_min, RoboDog::end_effector_z_min,
+        RoboDog::end_effector_x_max, RoboDog::end_effector_y_max,
+        RoboDog::end_effector_z_max};
+
+    end_effectors[leg_prefix + end_effector_str] = end_effector;
   }
 
   links =

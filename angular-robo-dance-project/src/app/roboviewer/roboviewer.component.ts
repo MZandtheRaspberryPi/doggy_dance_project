@@ -1,8 +1,8 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { Joint } from '../joint';
+import { EndEffector, Joint } from '../joint';
 import { Link } from '../link';
-import { ForwardKinematics } from '../forward_kinematics_interfaces';
+import { ForwardKinematics } from '../kinematics_interfaces';
 import { RobomodelService } from '../robomodel.service';
 import { Robomodel } from '../robomodel';
 
@@ -76,7 +76,7 @@ function getLinkGroupsXYZ(links: Link[]): XYZLinksData {
 
 
 
-function getXYZFromJoints(joints: Joint[]): XYZData {
+function getXYZFromJoints(joints: Joint[] | EndEffector[]): XYZData {
   let parsedData: XYZData = { x: [], y: [], z: [] };
   for (let i = 0; i < joints.length; i++) {
     parsedData.x.push(joints[i].location.x);
@@ -181,15 +181,15 @@ export class RoboviewerComponent implements OnInit {
         },
         xaxis: {
           nticks: 4,
-          range: [-1, 1],
+          range: [this.robomodelService.AXIS_NEGATIVE_LIMIT, this.robomodelService.AXIS_POSITIVE_LIMIT],
         },
         yaxis: {
           nticks: 4,
-          range: [-1, 1],
+          range: [this.robomodelService.AXIS_NEGATIVE_LIMIT, this.robomodelService.AXIS_POSITIVE_LIMIT],
         },
         zaxis: {
           nticks: 4,
-          range: [-1, 1],
+          range: [this.robomodelService.AXIS_NEGATIVE_LIMIT, this.robomodelService.AXIS_POSITIVE_LIMIT],
         }
       },
     };
@@ -256,6 +256,6 @@ export class RoboviewerComponent implements OnInit {
       joints: []
     };
 
-    this.robomodelService.getForwardKinematics(0, kinematics);
+    this.robomodelService.getForwardKinematics(kinematics);
   }
 }

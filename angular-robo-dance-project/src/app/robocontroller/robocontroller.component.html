@@ -1,9 +1,19 @@
 <mat-tab-group dynamicHeight="true">
     <mat-tab label="Forward Kinematics">
-        <li *ngFor="let slider of sliders">
+        <li *ngFor="let slider of forward_sliders">
             {{slider.name}}
             <mat-slider min="{{slider.min}}" max="{{slider.max}}" step="{{slider.step}}" value="{{slider.cur}}"
-                (change)="sliderInput($event, slider)">
+                tickInterval="auto" (change)="sliderInput($event, slider)">
+                <input matSliderThumb>
+            </mat-slider>
+        </li>
+    </mat-tab>
+
+    <mat-tab label="Inverse Kinematics">
+        <li *ngFor="let slider of inverse_sliders">
+            {{slider.name}}
+            <mat-slider min="{{slider.min}}" max="{{slider.max}}" step="{{slider.step}}" value="{{slider.cur}}"
+                tickInterval="auto" (change)="sliderInput($event, slider)">
                 <input matSliderThumb>
             </mat-slider>
         </li>

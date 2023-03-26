@@ -47,23 +47,28 @@ getRoboModelDTOSharedPtrFromModel(const Robomodel &robomodel) {
     robo_model->links->push_back(dto_link);
   }
 
-  for (const Joint &joint : robomodel.end_effectors) {
-    auto dto_joint = JointDTO::createShared();
+  for (const EndEffector &end_effector : robomodel.end_effectors) {
+    auto dto_end_effector = EndEffectorDTO::createShared();
 
-    auto joint_location = CoordinateDTO::createShared();
+    auto end_effector_location = CoordinateDTO::createShared();
 
-    joint_location->x = joint.location[0];
-    joint_location->y = joint.location[1];
-    joint_location->z = joint.location[2];
+    end_effector_location->x = end_effector.location[0];
+    end_effector_location->y = end_effector.location[1];
+    end_effector_location->z = end_effector.location[2];
 
-    dto_joint->location = joint_location;
-    dto_joint->name = joint.name;
-    dto_joint->number = joint.number;
-    dto_joint->joint_type = joint.joint_type;
-    dto_joint->current_angle_radians = joint.current_angle_radians;
-    dto_joint->min_angle_radians = joint.min_angle_radians;
-    dto_joint->max_angle_radians = joint.max_angle_radians;
-    robo_model->end_effectors->push_back(dto_joint);
+    dto_end_effector->location = end_effector_location;
+    dto_end_effector->name = end_effector.name;
+    dto_end_effector->number = end_effector.number;
+
+    dto_end_effector->min_x = end_effector.min_x;
+    dto_end_effector->min_y = end_effector.min_y;
+    dto_end_effector->min_z = end_effector.min_z;
+
+    dto_end_effector->max_x = end_effector.max_x;
+    dto_end_effector->max_y = end_effector.max_y;
+    dto_end_effector->max_z = end_effector.max_z;
+
+    robo_model->end_effectors->push_back(dto_end_effector);
   }
 
   robo_model->id = robomodel.id;

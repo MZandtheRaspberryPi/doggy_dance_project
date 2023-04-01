@@ -50,13 +50,22 @@ getRoboModelDTOSharedPtrFromModel(const Robomodel &robomodel) {
   for (const EndEffector &end_effector : robomodel.end_effectors) {
     auto dto_end_effector = EndEffectorDTO::createShared();
 
-    auto end_effector_location = CoordinateDTO::createShared();
+    auto end_effector_location_global = CoordinateDTO::createShared();
 
-    end_effector_location->x = end_effector.location[0];
-    end_effector_location->y = end_effector.location[1];
-    end_effector_location->z = end_effector.location[2];
+    end_effector_location_global->x = end_effector.location_global[0];
+    end_effector_location_global->y = end_effector.location_global[1];
+    end_effector_location_global->z = end_effector.location_global[2];
 
-    dto_end_effector->location = end_effector_location;
+    dto_end_effector->location_global = end_effector_location_global;
+
+    auto end_effector_location_shoulder = CoordinateDTO::createShared();
+
+    end_effector_location_shoulder->x = end_effector.location_shoulder[0];
+    end_effector_location_shoulder->y = end_effector.location_shoulder[1];
+    end_effector_location_shoulder->z = end_effector.location_shoulder[2];
+
+    dto_end_effector->location_shoulder = end_effector_location_shoulder;
+
     dto_end_effector->name = end_effector.name;
     dto_end_effector->number = end_effector.number;
 

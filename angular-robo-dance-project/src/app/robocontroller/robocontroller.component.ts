@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { MatSliderChange } from '@angular/material/slider'
 
 import { EndEffectorTrimmed, ForwardKinematics, InverseKinematics } from '../kinematics_interfaces';
-import { JointId } from '../joint';
+import { JointId, Joint } from '../joint';
 import { Robomodel } from '../robomodel';
 import { RobomodelService } from '../robomodel.service';
 
@@ -35,7 +35,7 @@ export class RobocontrollerComponent implements OnInit {
   constructor(private robomodelService: RobomodelService) {
     this.robomodel = { id: -1, name: "", links: [], joints: [], end_effectors: [] };
     this.prevRoboModel = -1;
-    this.num_slider_steps = 100;
+    this.num_slider_steps = 36;
 
     this.forward_kinematics = {
       body_x_meters: 0,
@@ -99,7 +99,6 @@ export class RobocontrollerComponent implements OnInit {
         this.robomodel = robomodel;
         this.updateForwardJointsAndSliders(robomodel);
         this.updateInverseEndEffectorsAndSliders(robomodel);
-        this.updateSliders();
       },
       error: err => console.error('An error occurred', err)
     });
@@ -111,8 +110,6 @@ export class RobocontrollerComponent implements OnInit {
     if (event.value == null) {
       return;
     }
-    console.log(slider.name);
-    console.log(this.robomodelService.END_EFFECTOR_STR);
     let inverse_kinematic_flag: boolean = false;
     if (slider.name == "body_x_meters") {
       this.forward_kinematics.body_x_meters = event.value;
@@ -145,17 +142,17 @@ export class RobocontrollerComponent implements OnInit {
 
     else if (slider.name.endsWith(this.robomodelService.END_EFFECTOR_STR + "_x")) {
       inverse_kinematic_flag = true;
-      this.inverse_kinematics.end_effectors[slider.joint_id - 1].location.x = event.value;
+      this.inverse_kinematics.end_effectors[slider.joint_id - 1].location_shoulder.x = event.value;
     }
 
     else if (slider.name.endsWith(this.robomodelService.END_EFFECTOR_STR + "_y")) {
       inverse_kinematic_flag = true;
-      this.inverse_kinematics.end_effectors[slider.joint_id - 1].location.y = event.value;
+      this.inverse_kinematics.end_effectors[slider.joint_id - 1].location_shoulder.y = event.value;
     }
 
     else if (slider.name.endsWith(this.robomodelService.END_EFFECTOR_STR + "_z")) {
       inverse_kinematic_flag = true;
-      this.inverse_kinematics.end_effectors[slider.joint_id - 1].location.z = event.value;
+      this.inverse_kinematics.end_effectors[slider.joint_id - 1].location_shoulder.z = event.value;
     }
 
     else {
@@ -166,7 +163,6 @@ export class RobocontrollerComponent implements OnInit {
       this.updateBodySlider(slider.name, event.value);
     }
 
-    console.log(inverse_kinematic_flag);
     if (inverse_kinematic_flag) {
       this.robomodelService.getInverseKinematics(this.inverse_kinematics);
     }
@@ -174,15 +170,6 @@ export class RobocontrollerComponent implements OnInit {
       this.robomodelService.getForwardKinematics(this.forward_kinematics);
     }
 
-  }
-
-  updateSliders(): void {
-    if (this.prevRoboModel !== this.robomodel.id) {
-      this.prevRoboModel = this.robomodel.id;
-
-      this.updateForwardJointsAndSliders(this.robomodel);
-      this.updateInverseEndEffectorsAndSliders(this.robomodel);
-    }
   }
 
   updateInverseEndEffectorsAndSliders(model: Robomodel): void {
@@ -193,9 +180,12 @@ export class RobocontrollerComponent implements OnInit {
     this.inverse_sliders = this.inverse_sliders.concat(this.body_sliders);
 
     let axis_letters: string[] = new Array("x", "y", "z");
+
+    let slider_end_effectors: SliderDetails[] = new Array(model.end_effectors.length * axis_letters.length);
+    this.inverse_sliders = this.inverse_sliders.concat(slider_end_effectors);
+
     for (let i: number = 0; i < model.end_effectors.length; i++) {
       for (let j: number = 0; j < axis_letters.length; j++) {
-
         let new_slider: SliderDetails = {
           name: model.end_effectors[i].name + "_" + axis_letters[j],
           joint_id: model.end_effectors[i].number,
@@ -206,62 +196,59 @@ export class RobocontrollerComponent implements OnInit {
         };
 
         if (axis_letters[j] == "x") {
-          new_slider.cur = model.end_effectors[i].location.x;
+          new_slider.cur = model.end_effectors[i].location_shoulder.x;
           new_slider.min = model.end_effectors[i].min_x;
           new_slider.max = model.end_effectors[i].max_x;
         }
         else if (axis_letters[j] == "y") {
-          new_slider.cur = model.end_effectors[i].location.y;
+          new_slider.cur = model.end_effectors[i].location_shoulder.y;
           new_slider.min = model.end_effectors[i].min_y;
           new_slider.max = model.end_effectors[i].max_y;
         }
         else if (axis_letters[j] == "z") {
-          new_slider.cur = model.end_effectors[i].location.z;
+          new_slider.cur = model.end_effectors[i].location_shoulder.z;
           new_slider.min = model.end_effectors[i].min_z;
           new_slider.max = model.end_effectors[i].max_z;
         }
-
-        this.inverse_sliders.push(new_slider);
+        this.inverse_sliders[this.body_sliders.length + (i * 3) + j] = new_slider;
 
       }
 
-    }
-
-    this.inverse_kinematics.end_effectors = new Array(model.end_effectors.length);
-
-    for (let i: number = 0; i < model.end_effectors.length; i++) {
       let new_end_effector: EndEffectorTrimmed = {
         id: model.end_effectors[i].number,
-        location: {
-          x: model.end_effectors[i].location.x,
-          y: model.end_effectors[i].location.y,
-          z: model.end_effectors[i].location.z
+        location_shoulder: {
+          x: model.end_effectors[i].location_shoulder.x,
+          y: model.end_effectors[i].location_shoulder.y,
+          z: model.end_effectors[i].location_shoulder.z
         }
       };
 
-      this.inverse_kinematics.end_effectors[i] = new_end_effector;
+      this.inverse_kinematics.end_effectors[model.end_effectors[i].number - 1] = new_end_effector;
+
     }
 
   }
 
   updateForwardJointsAndSliders(model: Robomodel): void {
-    this.forward_kinematics.joints = new Array(this.robomodel.joints.length);
+    this.forward_kinematics.joints = new Array(model.joints.length);
 
     this.forward_sliders = new Array();
     this.forward_sliders = this.forward_sliders.concat(this.body_sliders);
-    for (let i: number = 0; i < this.robomodel.joints.length; i++) {
+    let slider_joints: SliderDetails[] = new Array(model.joints.length);
+    this.forward_sliders = this.forward_sliders.concat(slider_joints);
+    for (let i: number = 0; i < model.joints.length; i++) {
       let new_slider: SliderDetails = {
-        name: this.robomodel.joints[i].name,
-        joint_id: this.robomodel.joints[i].number,
-        min: this.robomodel.joints[i].min_angle_radians,
-        max: this.robomodel.joints[i].max_angle_radians,
-        cur: this.robomodel.joints[i].current_angle_radians,
-        step: 1
+        name: model.joints[i].name,
+        joint_id: model.joints[i].number,
+        min: model.joints[i].min_angle_radians,
+        max: model.joints[i].max_angle_radians,
+        cur: model.joints[i].current_angle_radians,
+        step: 0
       };
       new_slider.step = (new_slider.max - new_slider.min) / this.num_slider_steps;
-      this.forward_sliders.push(new_slider);
-      let new_joint: JointId = { number: this.robomodel.joints[i].number, current_angle_radians: this.robomodel.joints[i].current_angle_radians };
-      this.forward_kinematics.joints[this.robomodel.joints[i].number - 1] = new_joint;
+      this.forward_sliders[this.body_sliders.length + model.joints[i].number - 1] = new_slider;
+      let new_joint: JointId = { number: model.joints[i].number, current_angle_radians: model.joints[i].current_angle_radians };
+      this.forward_kinematics.joints[model.joints[i].number - 1] = new_joint;
     }
   }
 
@@ -274,6 +261,10 @@ export class RobocontrollerComponent implements OnInit {
         break;
       }
     }
+  }
+
+  formatLabel(value: number) {
+    return Math.round(value * 10) / 10;
   }
 
 }

@@ -52,12 +52,12 @@ class EndEffectorDTO : public oatpp::DTO {
 
   DTO_FIELD(Int32, number);
   DTO_FIELD(String, name);
-  DTO_FIELD(Object<CoordinateDTO>, location);
+  DTO_FIELD(Object<CoordinateDTO>, location_global);
+  DTO_FIELD(Object<CoordinateDTO>, location_shoulder);
   DTO_FIELD(Float32, min_x);
   DTO_FIELD(Float32, min_y);
   DTO_FIELD(Float32, min_z);
   DTO_FIELD(Float32, max_x);
-  ;
   DTO_FIELD(Float32, max_y);
   DTO_FIELD(Float32, max_z);
 };

@@ -14,7 +14,7 @@ export interface ForwardKinematics {
 
 export interface EndEffectorTrimmed {
     id: number,
-    location: Coordinate
+    location_shoulder: Coordinate
 }
 
 export interface InverseKinematics {

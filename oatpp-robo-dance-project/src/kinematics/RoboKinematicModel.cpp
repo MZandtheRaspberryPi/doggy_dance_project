@@ -67,11 +67,11 @@ const int RoboDog::num_links = 16;
 const int RoboDog::num_end_effectors = 4;
 
 const float RoboDog::end_effector_x_min = -0.4;
-const float RoboDog::end_effector_y_min = -1.2;
-const float RoboDog::end_effector_z_min = -0.4;
+const float RoboDog::end_effector_y_min = -0.8;
+const float RoboDog::end_effector_z_min = -0.5;
 const float RoboDog::end_effector_x_max = 0.4;
-const float RoboDog::end_effector_y_max = -0.4;
-const float RoboDog::end_effector_z_max = 0.4;
+const float RoboDog::end_effector_y_max = -0.1;
+const float RoboDog::end_effector_z_max = 0.5;
 
 const int RoboDog::id = 0;
 const std::string RoboDog::name = "robo_dog";
@@ -118,6 +118,22 @@ const std::unordered_map<std::string, int> RoboDog::joint_str_to_id_mapping = {
     {RoboDog::back_right_leg_prefix + RoboDog::end_effector_str, 4},
 };
 
+const std::unordered_map<std::string, double>
+    RoboDog::joint_str_to_default_angle_mapping = {
+        {RoboDog::front_left_leg_prefix + RoboDog::shoulder_str, 0},
+        {RoboDog::front_left_leg_prefix + RoboDog::elbow_str, -M_PI / 4},
+        {RoboDog::front_left_leg_prefix + RoboDog::wrist_str, M_PI / 2},
+        {RoboDog::front_right_leg_prefix + RoboDog::shoulder_str, 0},
+        {RoboDog::front_right_leg_prefix + RoboDog::elbow_str, M_PI / 4},
+        {RoboDog::front_right_leg_prefix + RoboDog::wrist_str, -M_PI / 2},
+        {RoboDog::back_left_leg_prefix + RoboDog::shoulder_str, 0},
+        {RoboDog::back_left_leg_prefix + RoboDog::elbow_str, -M_PI / 4},
+        {RoboDog::back_left_leg_prefix + RoboDog::wrist_str, M_PI / 2},
+        {RoboDog::back_right_leg_prefix + RoboDog::shoulder_str, 0},
+        {RoboDog::back_right_leg_prefix + RoboDog::elbow_str, M_PI / 4},
+        {RoboDog::back_right_leg_prefix + RoboDog::wrist_str, -M_PI / 2},
+};
+
 const std::unordered_map<std::string, int> RoboDog::leg_str_to_id_mapping = {
     {RoboDog::front_left_leg_str, 1},
     {RoboDog::front_right_leg_str, 2},
@@ -162,8 +178,8 @@ RoboDog::getBaseToShoulderTransforms(const Vector3d &body_location,
   std::unordered_map<std::string, Matrix4d> shoulder_transform_map;
   shoulder_transform_map[front_left_leg_prefix] = front_left_matrix;
   shoulder_transform_map[front_right_leg_prefix] = front_right_matrix;
-  shoulder_transform_map[back_left_leg_prefix] = back_right_matrix;
-  shoulder_transform_map[back_right_leg_prefix] = back_left_matrix;
+  shoulder_transform_map[back_right_leg_prefix] = back_right_matrix;
+  shoulder_transform_map[back_left_leg_prefix] = back_left_matrix;
 
   return shoulder_transform_map;
 }
@@ -181,7 +197,7 @@ RoboDog::getJointsForLeg(const Matrix4d &base_to_leg_matrix,
                        getCoordinateFromTransformMatrix(base_to_leg_matrix),
                        JointType::ROTATING,
                        theta1,
-                       -2 * M_PI,
+                       0,
                        2 * M_PI};
   joints_map[joint_name] = shoulder_joint;
 
@@ -291,8 +307,8 @@ std::vector<Link> RoboDog::getLinksFromJoints(
   int link_id_counter = 1;
   // make body links first
   std::vector<std::string> joint_link_names = {
-      front_left_leg_prefix, front_right_leg_prefix, back_left_leg_prefix,
-      back_right_leg_prefix};
+      front_left_leg_prefix, front_right_leg_prefix, back_right_leg_prefix,
+      back_left_leg_prefix};
   for (int i = 0; i < joint_link_names.size(); i++) {
     const std::string &starting_joint_name = joint_link_names[i];
     const Matrix4d &starting_transform_matrix =
@@ -343,7 +359,7 @@ std::vector<Link> RoboDog::getLinksFromJoints(
     Link wrist_to_end_effector_link{
         link_id_counter, leg_prefix + wrist_str + "_" + end_effector_str,
         joints.at(wrist_joint_name).location,
-        end_effectors.at(end_effector_name).location};
+        end_effectors.at(end_effector_name).location_global};
     link_id_counter++;
     links.push_back(wrist_to_end_effector_link);
   }
@@ -385,10 +401,11 @@ Robomodel RoboDog::getForwardKinematics(
     int shoulder_id, elbow_id, wrist_id;
     shoulder_joint_name = leg_prefix + shoulder_str;
     shoulder_id = joint_str_to_id_mapping.at(shoulder_joint_name);
+
     if (joint_angle_mapping.find(shoulder_id) != joint_angle_mapping.end()) {
       theta1 = joint_angle_mapping.at(shoulder_id);
     } else {
-      theta1 = 0.0;
+      theta1 = joint_str_to_default_angle_mapping.at(shoulder_joint_name);
     }
 
     elbow_joint_name = leg_prefix + elbow_str;
@@ -396,7 +413,7 @@ Robomodel RoboDog::getForwardKinematics(
     if (joint_angle_mapping.find(elbow_id) != joint_angle_mapping.end()) {
       theta2 = joint_angle_mapping.at(elbow_id);
     } else {
-      theta2 = 0.0;
+      theta2 = joint_str_to_default_angle_mapping.at(elbow_joint_name);
     }
 
     wrist_joint_name = leg_prefix + wrist_str;
@@ -404,9 +421,11 @@ Robomodel RoboDog::getForwardKinematics(
     if (joint_angle_mapping.find(wrist_id) != joint_angle_mapping.end()) {
       theta3 = joint_angle_mapping.at(wrist_id);
     } else {
-      theta3 = 0.0;
+      theta3 = joint_str_to_default_angle_mapping.at(wrist_joint_name);
     }
 
+    std::cout << leg_prefix << " theta1: " << theta1 << " theta2: " << theta2
+              << " theta3: " << theta3 << std::endl;
     std::unordered_map<std::string, Joint> leg_joints =
         getJointsForLeg(shoulder_transform_matrices[leg_prefix], leg_prefix,
                         theta1, theta2, theta3);
@@ -417,12 +436,27 @@ Robomodel RoboDog::getForwardKinematics(
 
     Joint end_effector_joint = leg_joints[leg_prefix + end_effector_str];
 
+    // we will put location in coordinate system of shoulder, as thats
+    // convention we take for end effectors
+    Eigen::Vector4d location_4d = {end_effector_joint.location[0],
+                                   end_effector_joint.location[1],
+                                   end_effector_joint.location[2], 1};
+    Eigen::Vector4d location_shoulder_system_4d =
+        shoulder_transform_matrices[leg_prefix].inverse() * location_4d;
+    Eigen::Vector3d location_shoulder_system_3d = {
+        location_shoulder_system_4d[0], location_shoulder_system_4d[1],
+        location_shoulder_system_4d[2]};
+
+    std::cout << end_effector_joint.name << " global:\n"
+              << location_4d << " \nlocal:\n"
+              << location_shoulder_system_4d << std::endl;
+
     EndEffector end_effector{
         end_effector_joint.number,   end_effector_joint.name,
-        end_effector_joint.location, RoboDog::end_effector_x_min,
-        RoboDog::end_effector_y_min, RoboDog::end_effector_z_min,
-        RoboDog::end_effector_x_max, RoboDog::end_effector_y_max,
-        RoboDog::end_effector_z_max};
+        end_effector_joint.location, location_shoulder_system_3d,
+        RoboDog::end_effector_x_min, RoboDog::end_effector_y_min,
+        RoboDog::end_effector_z_min, RoboDog::end_effector_x_max,
+        RoboDog::end_effector_y_max, RoboDog::end_effector_z_max};
 
     end_effectors[leg_prefix + end_effector_str] = end_effector;
   }
@@ -446,6 +480,8 @@ Robomodel RoboDog::getForwardKinematics(
 Robomodel RoboDog::getInverseKinematics(
     const Vector3d &body_location, const Vector3d &body_rotation,
     const std::unordered_map<int, Vector3d> &end_effector_pos_mapping) {
+
+  std::cout << "getting inv kin" << std::endl;
 
   int front_left_end_effector_id = joint_str_to_id_mapping.at(
       RoboDog::front_left_leg_prefix + RoboDog::end_effector_str);
@@ -473,16 +509,19 @@ Robomodel RoboDog::getInverseKinematics(
       end_effector_pos = end_effector_pos_mapping.at(id);
     }
 
+    std::cout << leg_prefix_str << std::endl;
+    std::cout << end_effector_pos << std::endl;
+
     double x, y, z;
     x = end_effector_pos[0];
     y = end_effector_pos[1];
     z = end_effector_pos[2];
 
-    double first_part_theta1 = -atan2(-y, x);
+    double first_part_theta1 = atan2(y, x);
     double second_part_theta1 =
         atan2(sqrt(pow(x, 2) + pow(y, 2) - pow(l1, 2)), -l1);
 
-    double theta1 = first_part_theta1 - second_part_theta1;
+    double theta1 = first_part_theta1 + second_part_theta1;
 
     double D = (pow(x, 2) + pow(y, 2) - pow(l1, 2) + pow(z, 2) - pow(l2, 2) -
                 pow(l3, 2)) /

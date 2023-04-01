@@ -126,6 +126,8 @@ public:
     Vector3d body_location{body_x_meters, body_y_meters, body_z_meters};
     Vector3d body_rotation{body_roll_rad, body_pitch_rad, body_yaw_rad};
 
+    std::cout << "doing api resp" << std::endl;
+
     bool model_found = false;
     switch (robo_model_id) {
     case 0:
@@ -164,6 +166,7 @@ public:
 
         if (end_effector_found) {
 
+          std::cout << i << " " << x << " " << y << " " << z << std::endl;
           Vector3d end_effector_loc{x, y, z};
           end_effector_pos_mapping[i] = end_effector_loc;
         }

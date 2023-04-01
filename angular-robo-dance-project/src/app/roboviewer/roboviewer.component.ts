@@ -76,12 +76,22 @@ function getLinkGroupsXYZ(links: Link[]): XYZLinksData {
 
 
 
-function getXYZFromJoints(joints: Joint[] | EndEffector[]): XYZData {
+function getXYZFromJoints(joints: Joint[]): XYZData {
   let parsedData: XYZData = { x: [], y: [], z: [] };
   for (let i = 0; i < joints.length; i++) {
     parsedData.x.push(joints[i].location.x);
     parsedData.y.push(joints[i].location.y);
     parsedData.z.push(joints[i].location.z);
+  }
+  return parsedData;
+}
+
+function getXYZFromEndEffectors(end_effectors: EndEffector[]): XYZData {
+  let parsedData: XYZData = { x: [], y: [], z: [] };
+  for (let i = 0; i < end_effectors.length; i++) {
+    parsedData.x.push(end_effectors[i].location_global.x);
+    parsedData.y.push(end_effectors[i].location_global.y);
+    parsedData.z.push(end_effectors[i].location_global.z);
   }
   return parsedData;
 }
@@ -210,9 +220,6 @@ export class RoboviewerComponent implements OnInit {
       this.configSetup
     );
 
-
-    this.getRobomodel();
-
     this.robomodelSubscription = this.robomodelService.subject.subscribe(
       {
         next: robomodel => { this.robomodel = robomodel; this.updateGraphOnRobotLoad(); },
@@ -223,7 +230,7 @@ export class RoboviewerComponent implements OnInit {
 
   updateGraphOnRobotLoad(): void {
     let parsedJointsData: XYZData = getXYZFromJoints(this.robomodel.joints);
-    let parsedEndEffectorData: XYZData = getXYZFromJoints(this.robomodel.end_effectors);
+    let parsedEndEffectorData: XYZData = getXYZFromEndEffectors(this.robomodel.end_effectors);
 
     let parsedLinkData: XYZLinksData = getLinkGroupsXYZ(this.robomodel.links);
     if (parsedLinkData.link_groups.length < 5) {

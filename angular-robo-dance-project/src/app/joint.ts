@@ -25,7 +25,8 @@ export interface JointId {
 export interface EndEffector {
   number: number,
   name: string,
-  location: Coordinate,
+  location_global: Coordinate,
+  location_shoulder: Coordinate,
   min_x: number,
   min_y: number,
   min_z: number,

@@ -111,9 +111,9 @@ export class RobomodelService {
     params_obj = params_obj.set('body_yaw_rad', kinematics.body_yaw_rad);
 
     for (let i: number = 0; i < kinematics.end_effectors.length; i++) {
-      params_obj = params_obj.set(kinematics.end_effectors[i].id.toString() + '_x', kinematics.end_effectors[i].location.x);
-      params_obj = params_obj.set(kinematics.end_effectors[i].id.toString() + '_y', kinematics.end_effectors[i].location.y);
-      params_obj = params_obj.set(kinematics.end_effectors[i].id.toString() + '_z', kinematics.end_effectors[i].location.z);
+      params_obj = params_obj.set(kinematics.end_effectors[i].id.toString() + '_x', kinematics.end_effectors[i].location_shoulder.x);
+      params_obj = params_obj.set(kinematics.end_effectors[i].id.toString() + '_y', kinematics.end_effectors[i].location_shoulder.y);
+      params_obj = params_obj.set(kinematics.end_effectors[i].id.toString() + '_z', kinematics.end_effectors[i].location_shoulder.z);
     }
 
     let my_observable: Observable<Robomodel> = this.http.get<Robomodel>(this.roboModelsUrl + `/inverse_kinematics`, { params: params_obj })

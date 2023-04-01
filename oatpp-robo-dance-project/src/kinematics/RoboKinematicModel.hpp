@@ -24,7 +24,8 @@ struct Joint {
 struct EndEffector {
   int number;
   std::string name;
-  Eigen::Vector3d location;
+  Eigen::Vector3d location_global;
+  Eigen::Vector3d location_shoulder;
   float min_x;
   float min_y;
   float min_z;
@@ -151,4 +152,7 @@ private:
   const static std::string end_effector_str;
   const static std::unordered_map<std::string, int> joint_str_to_id_mapping;
   const static std::unordered_map<std::string, int> leg_str_to_id_mapping;
+
+  const static std::unordered_map<std::string, double>
+      joint_str_to_default_angle_mapping;
 };

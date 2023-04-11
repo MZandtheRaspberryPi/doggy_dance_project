@@ -127,11 +127,11 @@ const std::unordered_map<std::string, double>
         {RoboDog::front_right_leg_prefix + RoboDog::elbow_str, M_PI / 4},
         {RoboDog::front_right_leg_prefix + RoboDog::wrist_str, -M_PI / 2},
         {RoboDog::back_left_leg_prefix + RoboDog::shoulder_str, 0},
-        {RoboDog::back_left_leg_prefix + RoboDog::elbow_str, -M_PI / 4},
-        {RoboDog::back_left_leg_prefix + RoboDog::wrist_str, M_PI / 2},
+        {RoboDog::back_left_leg_prefix + RoboDog::elbow_str, M_PI / 4},
+        {RoboDog::back_left_leg_prefix + RoboDog::wrist_str, -M_PI / 2},
         {RoboDog::back_right_leg_prefix + RoboDog::shoulder_str, 0},
-        {RoboDog::back_right_leg_prefix + RoboDog::elbow_str, M_PI / 4},
-        {RoboDog::back_right_leg_prefix + RoboDog::wrist_str, -M_PI / 2},
+        {RoboDog::back_right_leg_prefix + RoboDog::elbow_str, -M_PI / 4},
+        {RoboDog::back_right_leg_prefix + RoboDog::wrist_str, M_PI / 2},
 };
 
 const std::unordered_map<std::string, int> RoboDog::leg_str_to_id_mapping = {
@@ -198,7 +198,8 @@ RoboDog::getJointsForLeg(const Matrix4d &base_to_leg_matrix,
                        JointType::ROTATING,
                        theta1,
                        0,
-                       2 * M_PI};
+                       2 * M_PI,
+                       base_to_leg_matrix};
   joints_map[joint_name] = shoulder_joint;
 
   // here t01 indicates matrix to transform from 0 to 1 joint
@@ -218,7 +219,8 @@ RoboDog::getJointsForLeg(const Matrix4d &base_to_leg_matrix,
                     JointType::ROTATING,
                     theta2,
                     -2 * M_PI,
-                    2 * M_PI};
+                    2 * M_PI,
+                    intermediate_matrix};
 
   joints_map[joint_name] = elbow_joint;
   // seems there are some bugs in this matrix from the paper
@@ -242,7 +244,8 @@ RoboDog::getJointsForLeg(const Matrix4d &base_to_leg_matrix,
                     JointType::ROTATING,
                     theta3,
                     -2 * M_PI,
-                    2 * M_PI};
+                    2 * M_PI,
+                    intermediate_matrix};
   joints_map[joint_name] = wrist_joint;
 
   Matrix4d t34{{cos(theta3), -sin(theta3), 0, l3 * cos(theta3)},
@@ -261,7 +264,8 @@ RoboDog::getJointsForLeg(const Matrix4d &base_to_leg_matrix,
       JointType::FIXED,
       0,
       0,
-      0};
+      0,
+      intermediate_matrix};
   joints_map[joint_name] = end_effector_joint;
 
   return joints_map;
@@ -438,18 +442,53 @@ Robomodel RoboDog::getForwardKinematics(
 
     // we will put location in coordinate system of shoulder, as thats
     // convention we take for end effectors
-    Eigen::Vector4d location_4d = {end_effector_joint.location[0],
-                                   end_effector_joint.location[1],
-                                   end_effector_joint.location[2], 1};
-    Eigen::Vector4d location_shoulder_system_4d =
-        shoulder_transform_matrices[leg_prefix].inverse() * location_4d;
-    Eigen::Vector3d location_shoulder_system_3d = {
-        location_shoulder_system_4d[0], location_shoulder_system_4d[1],
-        location_shoulder_system_4d[2]};
+    std::cout << leg_prefix << " shoulder"
+              << "\n"
+              << shoulder_transform_matrices[leg_prefix] << std::endl;
+    std::cout << "inverse of: " << leg_prefix << " shoulder"
+              << "\n"
+              << shoulder_transform_matrices[leg_prefix].inverse() << std::endl;
+    std::cout << "transpose of: " << leg_prefix << " shoulder"
+              << "\n"
+              << shoulder_transform_matrices[leg_prefix].transpose()
+              << std::endl;
+    Eigen::Vector3d location_shoulder_system_3d;
+    /*
+    Eigen::Vector3d location_shoulder_system_3d =
+        getCoordinateFromTransformMatrix(
+            end_effector_joint.raw_matrix -
+            shoulder_transform_matrices[leg_prefix]);
+            */
+    // leg effector end pos in global, is relative to 0, 0, 0. to put that
+    // relative to the shoulder, how do we go there if the body has rotation?
+    // for instance, if the body is negatively, the back left shoulder will have
+    // positive y height and its x will be a little less than 0.5 (body length)
+    // should we still subtract 0.5 to get to the coordinate system?
+    if (leg_prefix == RoboDog::back_left_leg_prefix) {
+      location_shoulder_system_3d = {
+          end_effector_joint.location[0] + RoboDog::body_length / 2,
+          end_effector_joint.location[1],
+          end_effector_joint.location[2] + RoboDog::body_width / 2};
+    } else if (leg_prefix == RoboDog::front_left_leg_prefix) {
+      location_shoulder_system_3d = {
+          end_effector_joint.location[0] - RoboDog::body_length / 2,
+          end_effector_joint.location[1],
+          end_effector_joint.location[2] + RoboDog::body_width / 2};
+    } else if (leg_prefix == RoboDog::back_right_leg_prefix) {
+      location_shoulder_system_3d = {
+          end_effector_joint.location[0] + RoboDog::body_length / 2,
+          end_effector_joint.location[1],
+          end_effector_joint.location[2] - RoboDog::body_width / 2};
+    } else if (leg_prefix == RoboDog::front_right_leg_prefix) {
+      location_shoulder_system_3d = {
+          end_effector_joint.location[0] - RoboDog::body_length / 2,
+          end_effector_joint.location[1],
+          end_effector_joint.location[2] - RoboDog::body_width / 2};
+    }
 
     std::cout << end_effector_joint.name << " global:\n"
-              << location_4d << " \nlocal:\n"
-              << location_shoulder_system_4d << std::endl;
+              << end_effector_joint.raw_matrix << " \nlocal:\n"
+              << location_shoulder_system_3d << std::endl;
 
     EndEffector end_effector{
         end_effector_joint.number,   end_effector_joint.name,
@@ -503,6 +542,7 @@ Robomodel RoboDog::getInverseKinematics(
   for (int i = 0; i < end_effector_ids.size(); i++) {
     int id = end_effector_ids[i];
     std::string leg_prefix_str = leg_prefix_strs[i];
+    std::cout << "working on " << id << " " << leg_prefix_str << "\n";
 
     Vector3d end_effector_pos = default_x_y_z_end_effectors;
     if (end_effector_pos_mapping.find(id) != end_effector_pos_mapping.end()) {
@@ -517,9 +557,15 @@ Robomodel RoboDog::getInverseKinematics(
     y = end_effector_pos[1];
     z = end_effector_pos[2];
 
+    std::cout << "x: " << x << " y: " << y << " z: " << z << std::endl;
+
     double first_part_theta1 = atan2(y, x);
     double second_part_theta1 =
         atan2(sqrt(pow(x, 2) + pow(y, 2) - pow(l1, 2)), -l1);
+
+    std::cout << "first part theta1: " << first_part_theta1 / M_PI
+              << " second part theta1 " << second_part_theta1 / M_PI
+              << std::endl;
 
     double theta1 = first_part_theta1 + second_part_theta1;
 
@@ -545,6 +591,8 @@ Robomodel RoboDog::getInverseKinematics(
     joint_angle_mapping[shoulder_joint_id] = theta1;
     joint_angle_mapping[elbow_joint_id] = theta2;
     joint_angle_mapping[wrist_joint_id] = theta3;
+    std::cout << "theta1: " << theta1 / M_PI << " theta2: " << theta2 / M_PI
+              << " theta3: " << theta3 / M_PI << std::endl;
   }
 
   return getForwardKinematics(body_location, body_rotation,

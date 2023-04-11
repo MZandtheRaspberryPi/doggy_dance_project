@@ -46,3 +46,22 @@ set_target_properties(${project_name}-lib ${project_name}-exe PROPERTIES
         CXX_EXTENSIONS OFF
         CXX_STANDARD_REQUIRED ON
 )
+
+# tests
+enable_testing()
+
+find_package(GTest REQUIRED)
+include_directories(${GTEST_INCLUDE_DIRS})
+
+add_executable(
+  test_kinematics
+  tests/test_kinematics.cpp
+)
+target_link_libraries(
+  test_kinematics
+  GTest::gtest_main
+  ${project_name}-lib
+)
+
+include(GoogleTest)
+gtest_discover_tests(test_kinematics)

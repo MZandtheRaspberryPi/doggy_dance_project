@@ -5,6 +5,7 @@ RUN apk add cmake
 RUN apk add g++
 RUN apk add make
 RUN apk add eigen eigen-dev
+RUN apk add gtest-dev
 
 RUN git clone https://github.com/oatpp/oatpp.git && cd oatpp/ && mkdir build && cd build && cmake .. && make install
 
@@ -13,6 +14,8 @@ RUN rm -rf oatpp
 COPY ./ ./app
 
 RUN cd /app && mkdir build && cd build && cmake .. && make
+
+RUN cd /app/build && ./test_kinematics
 
 RUN mkdir /entrypoint && cp /app/build/robo-dance-project-exe /entrypoint
 

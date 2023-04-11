@@ -192,7 +192,7 @@ export class RobocontrollerComponent implements OnInit {
           min: 0,
           max: 0,
           cur: 0,
-          step: (this.robomodelService.AXIS_POSITIVE_LIMIT - this.robomodelService.AXIS_NEGATIVE_LIMIT) / this.num_slider_steps
+          step: 0
         };
 
         if (axis_letters[j] == "x") {
@@ -206,10 +206,13 @@ export class RobocontrollerComponent implements OnInit {
           new_slider.max = model.end_effectors[i].max_y;
         }
         else if (axis_letters[j] == "z") {
-          new_slider.cur = model.end_effectors[i].location_shoulder.z;
           new_slider.min = model.end_effectors[i].min_z;
           new_slider.max = model.end_effectors[i].max_z;
+          new_slider.cur = model.end_effectors[i].location_shoulder.z;
         }
+
+        new_slider.step = (new_slider.max - new_slider.min) / this.num_slider_steps;
+
         this.inverse_sliders[this.body_sliders.length + (i * 3) + j] = new_slider;
 
       }
@@ -264,7 +267,7 @@ export class RobocontrollerComponent implements OnInit {
   }
 
   formatLabel(value: number) {
-    return Math.round(value * 10) / 10;
+    return Math.round(value * 100) / 100;
   }
 
 }

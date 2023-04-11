@@ -19,6 +19,7 @@ struct Joint {
   float current_angle_radians;
   float min_angle_radians;
   float max_angle_radians;
+  Matrix4d raw_matrix;
 };
 
 struct EndEffector {
@@ -101,6 +102,24 @@ public:
   const static int num_end_effectors;
   const static Vector3d default_x_y_z_end_effectors;
 
+  const static std::string front_left_leg_str;
+  const static std::string front_right_leg_str;
+  const static std::string back_left_leg_str;
+  const static std::string back_right_leg_str;
+
+  const static std::string front_left_leg_prefix;
+  const static std::string front_right_leg_prefix;
+  const static std::string back_left_leg_prefix;
+  const static std::string back_right_leg_prefix;
+  const static std::string body_prefix;
+
+  const static std::string shoulder_str;
+  const static std::string elbow_str;
+  const static std::string wrist_str;
+  const static std::string end_effector_str;
+  const static std::unordered_map<std::string, int> joint_str_to_id_mapping;
+  const static std::unordered_map<std::string, int> leg_str_to_id_mapping;
+
 protected:
   static std::vector<Link> getLinksFromJoints(
       const std::unordered_map<std::string, Matrix4d>
@@ -134,24 +153,6 @@ private:
   const static float end_effector_x_max;
   const static float end_effector_y_max;
   const static float end_effector_z_max;
-
-  const static std::string front_left_leg_str;
-  const static std::string front_right_leg_str;
-  const static std::string back_left_leg_str;
-  const static std::string back_right_leg_str;
-
-  const static std::string front_left_leg_prefix;
-  const static std::string front_right_leg_prefix;
-  const static std::string back_left_leg_prefix;
-  const static std::string back_right_leg_prefix;
-  const static std::string body_prefix;
-
-  const static std::string shoulder_str;
-  const static std::string elbow_str;
-  const static std::string wrist_str;
-  const static std::string end_effector_str;
-  const static std::unordered_map<std::string, int> joint_str_to_id_mapping;
-  const static std::unordered_map<std::string, int> leg_str_to_id_mapping;
 
   const static std::unordered_map<std::string, double>
       joint_str_to_default_angle_mapping;
